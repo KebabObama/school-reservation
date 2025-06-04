@@ -8,6 +8,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../lib/db.php';
+require_once __DIR__ . '/../lib/permissions.php';
 
 // Get reservation ID from URL parameter
 $reservationId = $_GET['id'] ?? null;
@@ -35,17 +36,8 @@ try {
     return;
   }
 
-  // Check permissions - allow if owner or has can_manage_reservations
-  $canEdit = false;
-  if ($reservation['user_id'] == $_SESSION['user_id']) {
-    $canEdit = true;
-  } else {
-    $stmt = $pdo->prepare("SELECT can_manage_reservations FROM permissions WHERE user_id = ?");
-    $stmt->execute([$_SESSION['user_id']]);
-    $canEdit = $stmt->fetchColumn();
-  }
-
-  if (!$canEdit) {
+  // Check permissions - allow if owner or has edit reservations permission
+  if (!canEditSpecificReservation($_SESSION['user_id'], $reservation['user_id'])) {
     echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to edit this reservation.</p></div>';
     return;
   }
@@ -215,13 +207,8 @@ try {
       placeholder="Any special requests or additional notes (e.g., accessibility needs, equipment requests)"><?php echo htmlspecialchars($reservation['special_requests'] ?? ''); ?></textarea>
   </div>
 
-  <!-- Status change section for users with can_accept_reservations permission -->
-  <?php
-  $stmt = $pdo->prepare("SELECT can_accept_reservations FROM permissions WHERE user_id = ?");
-  $stmt->execute([$_SESSION['user_id']]);
-  $canAcceptReservations = $stmt->fetchColumn();
-
-  if ($canAcceptReservations): ?>
+  <!-- Status change section for users with review status permission -->
+  <?php if (canReviewReservationStatus($_SESSION['user_id'])): ?>
     <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
       <h3 class="text-lg font-medium text-blue-800 mb-3">Reservation Status Management</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

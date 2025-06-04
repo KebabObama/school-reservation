@@ -9,14 +9,17 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../lib/db.php';
+require_once __DIR__ . '/../lib/permissions.php';
 
 // Get users with their permissions
 try {
+  $allPermissions = getAllPermissionNames();
+  $permissionColumns = implode(', p.', $allPermissions);
+
   $usersWithPermissions = $pdo->query("
         SELECT u.id, u.email, u.name, u.surname, u.is_verified,
-               p.can_add_room, p.can_verify_users, p.can_manage_reservations,
-               p.can_manage_users, p.can_manage_rooms, p.can_accept_reservations
-        FROM users u 
+               p.$permissionColumns
+        FROM users u
         LEFT JOIN permissions p ON u.id = p.user_id
         ORDER BY u.name, u.surname
     ")->fetchAll();
@@ -24,14 +27,7 @@ try {
   $usersWithPermissions = [];
 }
 
-$permissionLabels = [
-  'can_add_room' => 'Add Rooms',
-  'can_verify_users' => 'Verify Users',
-  'can_manage_reservations' => 'Manage Reservations',
-  'can_manage_users' => 'Manage Users',
-  'can_manage_rooms' => 'Manage Rooms',
-  'can_accept_reservations' => 'Accept Reservations'
-];
+$permissionCategories = getPermissionCategories();
 ?>
 
 <div class="space-y-6">
@@ -79,14 +75,26 @@ $permissionLabels = [
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
-              <?php foreach ($permissionLabels as $key => $label): ?>
-                <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <?php echo $label; ?>
+              <?php foreach ($permissionCategories as $categoryName => $permissions): ?>
+                <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200" colspan="<?php echo count($permissions); ?>">
+                  <?php echo ucfirst($categoryName); ?>
                 </th>
               <?php endforeach; ?>
               <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
+            </tr>
+            <tr class="bg-gray-100">
+              <th class="px-6 py-2"></th>
+              <th class="px-6 py-2"></th>
+              <?php foreach ($permissionCategories as $categoryName => $permissions): ?>
+                <?php foreach ($permissions as $permKey => $permLabel): ?>
+                  <th class="px-2 py-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
+                    <?php echo str_replace(ucfirst($categoryName) . ' ', '', $permLabel); ?>
+                  </th>
+                <?php endforeach; ?>
+              <?php endforeach; ?>
+              <th class="px-6 py-2"></th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
@@ -122,34 +130,34 @@ $permissionLabels = [
                     </span>
                   <?php endif; ?>
                 </td>
-                <?php foreach ($permissionLabels as $key => $label): ?>
-                  <td class="px-3 py-4 whitespace-nowrap text-center">
-                    <?php if ($user[$key]): ?>
-                      <span class="inline-flex items-center justify-center">
-                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                      </span>
-                    <?php else: ?>
-                      <span class="inline-flex items-center justify-center">
-                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                      </span>
-                    <?php endif; ?>
-                  </td>
+                <?php foreach ($permissionCategories as $categoryName => $permissions): ?>
+                  <?php foreach ($permissions as $permKey => $permLabel): ?>
+                    <td class="px-2 py-4 whitespace-nowrap text-center">
+                      <button type="button"
+                        class="permission-toggle inline-flex items-center justify-center w-6 h-6 rounded-full transition-colors duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        data-user-id="<?php echo $user['id']; ?>"
+                        data-permission="<?php echo $permKey; ?>"
+                        data-has-permission="<?php echo ($user[$permKey] ?? false) ? 'true' : 'false'; ?>"
+                        title="<?php echo $permLabel; ?>">
+                        <?php if ($user[$permKey] ?? false): ?>
+                          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                          </svg>
+                        <?php else: ?>
+                          <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                          </svg>
+                        <?php endif; ?>
+                      </button>
+                    </td>
+                  <?php endforeach; ?>
                 <?php endforeach; ?>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div class="flex justify-end space-x-2">
-                    <button class="text-blue-600 hover:text-blue-900" title="Edit User">
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                      </svg>
-                    </button>
-                    <button class="text-green-600 hover:text-green-900" title="Save Permissions">
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
+                    <button onclick="loadPage('PermissionChanges')"
+                      class="text-blue-600 hover:text-blue-900 text-xs px-2 py-1 border border-blue-300 rounded hover:bg-blue-50"
+                      title="Advanced Permission Management">
+                      Advanced
                     </button>
                   </div>
                 </td>
@@ -162,26 +170,47 @@ $permissionLabels = [
 
     <!-- Permission Legend -->
     <div class="bg-blue-50 rounded-lg p-4">
-      <h3 class="text-sm font-medium text-blue-900 mb-2">Permission Descriptions</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-blue-800">
-        <div><strong>Add Rooms:</strong> Can create new rooms</div>
-        <div><strong>Verify Users:</strong> Can verify user accounts</div>
-        <div><strong>Manage Reservations:</strong> Can view and modify all reservations</div>
-        <div><strong>Manage Users:</strong> Can create, edit, and delete users</div>
-        <div><strong>Manage Rooms:</strong> Can edit and delete rooms</div>
-        <div><strong>Accept Reservations:</strong> Can approve or reject reservation requests</div>
+      <h3 class="text-sm font-medium text-blue-900 mb-3">Permission Categories</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <?php foreach ($permissionCategories as $categoryName => $permissions): ?>
+          <div class="bg-white rounded-lg p-3 border border-blue-200">
+            <h4 class="font-medium text-blue-900 mb-2"><?php echo ucfirst($categoryName); ?></h4>
+            <ul class="text-sm text-blue-800 space-y-1">
+              <?php foreach ($permissions as $permKey => $permLabel): ?>
+                <li><strong><?php echo str_replace(ucfirst($categoryName) . ' ', '', $permLabel); ?>:</strong>
+                  <?php
+                  $descriptions = [
+                    'view' => 'Can view and list items',
+                    'create' => 'Can create new items',
+                    'edit' => 'Can modify existing items',
+                    'delete' => 'Can remove items',
+                    'review_status' => 'Can change status/approval'
+                  ];
+                  $action = explode('_', $permKey)[1] ?? '';
+                  echo $descriptions[$action] ?? 'Permission access';
+                  ?>
+                </li>
+              <?php endforeach; ?>
+            </ul>
+          </div>
+        <?php endforeach; ?>
       </div>
     </div>
   <?php endif; ?>
 </div>
 
 <script>
-  // Handle permission checkbox changes
-  document.addEventListener('change', function(e) {
-    if (e.target.type === 'checkbox' && e.target.dataset.userId) {
-      const userId = e.target.dataset.userId;
-      const permission = e.target.dataset.permission;
-      const isChecked = e.target.checked;
+  // Handle permission toggle clicks
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.permission-toggle')) {
+      const button = e.target.closest('.permission-toggle');
+      const userId = button.dataset.userId;
+      const permission = button.dataset.permission;
+      const currentValue = button.dataset.hasPermission === 'true';
+      const newValue = !currentValue;
+
+      // Update the button immediately for responsive UI
+      updatePermissionButton(button, newValue);
 
       // Send AJAX request to update the permission
       fetch('/api/permissions/update.php', {
@@ -192,7 +221,7 @@ $permissionLabels = [
           body: JSON.stringify({
             user_id: userId,
             permission: permission,
-            value: isChecked
+            value: newValue
           }),
           credentials: 'same-origin'
         })
@@ -200,20 +229,42 @@ $permissionLabels = [
         .then(result => {
           if (result.success) {
             // Show a temporary success message
-            const row = e.target.closest('tr');
+            const row = button.closest('tr');
+            const originalBg = row.style.backgroundColor;
             row.style.backgroundColor = '#f0f9ff';
             setTimeout(() => {
-              row.style.backgroundColor = '';
+              row.style.backgroundColor = originalBg;
             }, 1000);
           } else {
             popupSystem.error(result.error || 'Unknown error');
-            e.target.checked = !isChecked; // Revert checkbox
+            // Revert the button state
+            updatePermissionButton(button, currentValue);
           }
         })
         .catch(error => {
           popupSystem.error('Network error: ' + error.message);
-          e.target.checked = !isChecked; // Revert checkbox
+          // Revert the button state
+          updatePermissionButton(button, currentValue);
         });
     }
   });
+
+  // Function to update permission button appearance
+  function updatePermissionButton(button, hasPermission) {
+    button.dataset.hasPermission = hasPermission ? 'true' : 'false';
+
+    if (hasPermission) {
+      button.innerHTML = `
+        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+      `;
+    } else {
+      button.innerHTML = `
+        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      `;
+    }
+  }
 </script>

@@ -9,29 +9,23 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../lib/db.php';
+require_once __DIR__ . '/../lib/permissions.php';
 
-// Check if user has permission to manage users
-try {
-  $stmt = $pdo->prepare("SELECT can_manage_users FROM permissions WHERE user_id = ?");
-  $stmt->execute([$_SESSION['user_id']]);
-  $canManageUsers = $stmt->fetchColumn();
-
-  if (!$canManageUsers) {
-    echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to manage user permissions.</p></div>';
-    return;
-  }
-} catch (Exception $e) {
-  echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Unable to verify permissions.</p></div>';
+// Check if user has permission to edit users
+if (!canEditUsers($_SESSION['user_id'])) {
+  echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to manage user permissions.</p></div>';
   return;
 }
 
 // Get users with their permissions
 try {
+  $allPermissions = getAllPermissionNames();
+  $permissionColumns = implode(', p.', $allPermissions);
+
   $usersWithPermissions = $pdo->query("
         SELECT u.id, u.email, u.name, u.surname, u.is_verified,
-               p.can_add_room, p.can_verify_users, p.can_manage_reservations,
-               p.can_manage_users, p.can_manage_rooms, p.can_accept_reservations
-        FROM users u 
+               p.$permissionColumns
+        FROM users u
         LEFT JOIN permissions p ON u.id = p.user_id
         ORDER BY u.name, u.surname
     ")->fetchAll();
@@ -39,14 +33,12 @@ try {
   $usersWithPermissions = [];
 }
 
-$permissions = [
-  'can_add_room' => 'Add Rooms',
-  'can_verify_users' => 'Verify Users',
-  'can_manage_reservations' => 'Manage Reservations',
-  'can_manage_users' => 'Manage Users',
-  'can_manage_rooms' => 'Manage Rooms',
-  'can_accept_reservations' => 'Accept Reservations'
-];
+// Get all permissions with their labels
+$permissionCategories = getPermissionCategories();
+$permissions = [];
+foreach ($permissionCategories as $category) {
+  $permissions = array_merge($permissions, $category);
+}
 ?>
 
 <div class="space-y-6">
@@ -73,52 +65,51 @@ $permissions = [
 
     <div class="divide-y divide-gray-200">
       <?php foreach ($usersWithPermissions as $user): ?>
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                  <span class="text-sm font-medium text-gray-700">
-                    <?php echo strtoupper(substr($user['name'], 0, 1) . substr($user['surname'], 0, 1)); ?>
-                  </span>
-                </div>
-              </div>
-              <div class="ml-4">
-                <div class="flex items-center">
-                  <h3 class="text-lg font-medium text-gray-900">
-                    <?php echo htmlspecialchars($user['name'] . ' ' . $user['surname']); ?>
-                  </h3>
-                  <?php if ($user['is_verified']): ?>
-                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Verified
-                    </span>
-                  <?php else: ?>
-                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                      Unverified
-                    </span>
-                  <?php endif; ?>
-                </div>
-                <p class="text-sm text-gray-500"><?php echo htmlspecialchars($user['email']); ?></p>
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                <span class="text-sm font-medium text-gray-700">
+                  <?php echo strtoupper(substr($user['name'], 0, 1) . substr($user['surname'], 0, 1)); ?>
+                </span>
               </div>
             </div>
+            <div class="ml-4">
+              <div class="flex items-center">
+                <h3 class="text-lg font-medium text-gray-900">
+                  <?php echo htmlspecialchars($user['name'] . ' ' . $user['surname']); ?>
+                </h3>
+                <?php if ($user['is_verified']): ?>
+                <span
+                  class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  Verified
+                </span>
+                <?php else: ?>
+                <span
+                  class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                  Unverified
+                </span>
+                <?php endif; ?>
+              </div>
+              <p class="text-sm text-gray-500"><?php echo htmlspecialchars($user['email']); ?></p>
+            </div>
           </div>
+        </div>
 
-          <!-- Permission Controls -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <?php foreach ($permissions as $perm => $label): ?>
-              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span class="text-sm font-medium text-gray-700"><?php echo $label; ?></span>
-                <div class="flex items-center space-x-2">
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox"
-                      <?php echo $user[$perm] ? 'checked' : ''; ?>
-                      class="sr-only peer"
-                      onchange="(async function(event) {
+        <!-- Permission Controls -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <?php foreach ($permissions as $perm => $label): ?>
+          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <span class="text-sm font-medium text-gray-700"><?php echo $label; ?></span>
+            <div class="flex items-center space-x-2">
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" <?php echo $user[$perm] ? 'checked' : ''; ?> class="sr-only peer" onchange="(async function(event) {
                                            const checkbox = event.target;
                                            const userId = <?php echo $user['id']; ?>;
                                            const permission = '<?php echo $perm; ?>';
                                            const isChecked = checkbox.checked;
-                                           
+
                                            try {
                                                const response = await fetch('/api/permissions/update.php', {
                                                    method: 'POST',
@@ -130,7 +121,7 @@ $permissions = [
                                                    }),
                                                    credentials: 'same-origin'
                                                });
-                                               
+
                                                const result = await response.json();
                                                if (response.ok) {
                                                    // Show success feedback
@@ -148,78 +139,135 @@ $permissions = [
                                                checkbox.checked = !isChecked; // Revert
                                            }
                                        })(event)">
-                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
+                <div
+                  class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
                 </div>
-              </div>
-            <?php endforeach; ?>
+              </label>
+            </div>
           </div>
-
-          <!-- Quick Actions -->
-          <div class="mt-4 flex space-x-2">
-            <button onclick="(async function() {
-                        if (!confirm('Grant all permissions to this user?')) return;
-                        
-                        const userId = <?php echo $user['id']; ?>;
-                        const permissions = <?php echo json_encode(array_keys($permissions)); ?>;
-                        
-                        try {
-                            const response = await fetch('/api/permissions/update.php', {
-                                method: 'POST',
-                                headers: {'Content-Type': 'application/json'},
-                                body: JSON.stringify({
-                                    user_id: userId,
-                                    bulk_action: 'grant_all'
-                                }),
-                                credentials: 'same-origin'
-                            });
-                            
-                            const result = await response.json();
-                            if (response.ok) {
-                                location.reload(); // Refresh to show updated permissions
-                            } else {
-                                alert('Error: ' + (result.error || 'Unknown error'));
-                            }
-                        } catch (error) {
-                            alert('Network error: ' + error.message);
-                        }
-                    })()"
-              class="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">
-              Grant All
-            </button>
-
-            <button onclick="(async function() {
-                        if (!confirm('Revoke all permissions from this user?')) return;
-                        
-                        const userId = <?php echo $user['id']; ?>;
-                        
-                        try {
-                            const response = await fetch('/api/permissions/update.php', {
-                                method: 'POST',
-                                headers: {'Content-Type': 'application/json'},
-                                body: JSON.stringify({
-                                    user_id: userId,
-                                    bulk_action: 'revoke_all'
-                                }),
-                                credentials: 'same-origin'
-                            });
-                            
-                            const result = await response.json();
-                            if (response.ok) {
-                                location.reload(); // Refresh to show updated permissions
-                            } else {
-                                alert('Error: ' + (result.error || 'Unknown error'));
-                            }
-                        } catch (error) {
-                            alert('Network error: ' + error.message);
-                        }
-                    })()"
-              class="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700">
-              Revoke All
-            </button>
-          </div>
+          <?php endforeach; ?>
         </div>
+
+        <!-- Quick Actions -->
+        <div class="mt-4 flex space-x-2">
+          <button onclick="grantAllPermissions(<?php echo $user['id']; ?>)"
+            class="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">
+            Grant All
+          </button>
+
+          <button onclick="revokeAllPermissions(<?php echo $user['id']; ?>)"
+            class="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700">
+            Revoke All
+          </button>
+        </div>
+      </div>
       <?php endforeach; ?>
     </div>
   </div>
 </div>
+
+<script>
+// Grant all permissions for a user
+async function grantAllPermissions(userId) {
+  try {
+    const confirmed = await popupSystem.confirm(
+      'Grant all permissions to this user?',
+      'Grant All Permissions', {
+        confirmText: 'Grant All',
+        cancelText: 'Cancel',
+        type: 'info'
+      }
+    );
+
+    if (!confirmed) return;
+
+    const response = await fetch('/api/permissions/update.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        bulk_action: 'grant_all'
+      }),
+      credentials: 'same-origin'
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      // Update all permission checkboxes for this user
+      const userSection = document.querySelector(`input[onchange*="userId = ${userId}"]`).closest('.p-6');
+      const permissionCheckboxes = userSection.querySelectorAll('input[type="checkbox"]');
+
+      permissionCheckboxes.forEach(checkbox => {
+        checkbox.checked = true;
+      });
+
+      // Show success feedback
+      userSection.style.backgroundColor = '#f0f9ff';
+      setTimeout(() => {
+        userSection.style.backgroundColor = '';
+      }, 2000);
+
+      popupSystem.success('All permissions granted successfully!');
+    } else {
+      popupSystem.error(result.error || 'Failed to grant permissions');
+    }
+  } catch (error) {
+    popupSystem.error('Network error: ' + error.message);
+  }
+}
+
+// Revoke all permissions for a user
+async function revokeAllPermissions(userId) {
+  try {
+    const confirmed = await popupSystem.confirm(
+      'Revoke all permissions from this user?',
+      'Revoke All Permissions', {
+        confirmText: 'Revoke All',
+        cancelText: 'Cancel',
+        type: 'warning'
+      }
+    );
+
+    if (!confirmed) return;
+
+    const response = await fetch('/api/permissions/update.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        bulk_action: 'revoke_all'
+      }),
+      credentials: 'same-origin'
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      // Update all permission checkboxes for this user
+      const userSection = document.querySelector(`input[onchange*="userId = ${userId}"]`).closest('.p-6');
+      const permissionCheckboxes = userSection.querySelectorAll('input[type="checkbox"]');
+
+      permissionCheckboxes.forEach(checkbox => {
+        checkbox.checked = false;
+      });
+
+      // Show success feedback
+      userSection.style.backgroundColor = '#fef2f2';
+      setTimeout(() => {
+        userSection.style.backgroundColor = '';
+      }, 2000);
+
+      popupSystem.success('All permissions revoked successfully!');
+    } else {
+      popupSystem.error(result.error || 'Failed to revoke permissions');
+    }
+  } catch (error) {
+    popupSystem.error('Network error: ' + error.message);
+  }
+}
+</script>

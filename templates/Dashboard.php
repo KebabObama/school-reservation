@@ -10,6 +10,13 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../lib/db.php';
+require_once __DIR__ . '/../lib/permissions.php';
+
+// Get user permissions for dashboard
+$user_id = $_SESSION['user_id'];
+$canViewRooms = canViewRooms($user_id);
+$canViewReservations = canViewReservations($user_id);
+$canViewUsers = canViewUsers($user_id);
 
 // Get dashboard statistics
 try {
@@ -120,40 +127,50 @@ $user_surname = htmlspecialchars($_SESSION['user_surname'] ?? '');
   </div>
 
   <!-- Quick Actions -->
-  <div class="bg-white rounded-lg shadow p-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <button onclick="loadPage('Rooms')" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-        <svg class="w-8 h-8 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-        </svg>
-        <div class="text-left">
-          <p class="font-medium text-gray-900">Manage Rooms</p>
-          <p class="text-sm text-gray-600">Add, edit, or view rooms</p>
-        </div>
-      </button>
+  <?php
+  $hasQuickActions = $canViewRooms || $canViewReservations || $canViewUsers;
+  if ($hasQuickActions): ?>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <?php if ($canViewRooms): ?>
+          <button onclick="loadPage('Rooms')" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <svg class="w-8 h-8 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+            <div class="text-left">
+              <p class="font-medium text-gray-900">Manage Rooms</p>
+              <p class="text-sm text-gray-600">Add, edit, or view rooms</p>
+            </div>
+          </button>
+        <?php endif; ?>
 
-      <button onclick="loadPage('Reservations')" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-        <svg class="w-8 h-8 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-        </svg>
-        <div class="text-left">
-          <p class="font-medium text-gray-900">View Reservations</p>
-          <p class="text-sm text-gray-600">Manage bookings and approvals</p>
-        </div>
-      </button>
+        <?php if ($canViewReservations): ?>
+          <button onclick="loadPage('Reservations')" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <svg class="w-8 h-8 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <div class="text-left">
+              <p class="font-medium text-gray-900">View Reservations</p>
+              <p class="text-sm text-gray-600">Manage bookings and approvals</p>
+            </div>
+          </button>
+        <?php endif; ?>
 
-      <button onclick="loadPage('UserPage')" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-        <svg class="w-8 h-8 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-        </svg>
-        <div class="text-left">
-          <p class="font-medium text-gray-900">Manage Users</p>
-          <p class="text-sm text-gray-600">View and manage user accounts</p>
-        </div>
-      </button>
+        <?php if ($canViewUsers): ?>
+          <button onclick="loadPage('UserPage')" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <svg class="w-8 h-8 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+            </svg>
+            <div class="text-left">
+              <p class="font-medium text-gray-900">Manage Users</p>
+              <p class="text-sm text-gray-600">View and manage user accounts</p>
+            </div>
+          </button>
+        <?php endif; ?>
+      </div>
     </div>
-  </div>
+  <?php endif; ?>
 
   <!-- Today's Reservations and Recent Activity -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

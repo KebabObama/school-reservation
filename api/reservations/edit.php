@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../../lib/db.php';
+require_once __DIR__ . '/../../lib/permissions.php';
 
 $userId = $_SESSION['user_id'];
 $data = json_decode(file_get_contents('php://input'), true);
@@ -29,13 +30,15 @@ try {
     throw new Exception('Reservation not found');
   }
 
-  // Check permissions
-  if ($reservation['user_id'] != $userId) {
-    $permStmt = $pdo->prepare("SELECT can_manage_reservations FROM permissions WHERE user_id = ?");
-    $permStmt->execute([$userId]);
-    $perm = $permStmt->fetchColumn();
-    if (!$perm) {
-      throw new Exception('No permission to edit this reservation');
+  // Check permissions - users can edit their own reservations or if they have edit permission
+  if (!canEditSpecificReservation($userId, $reservation['user_id'])) {
+    throw new Exception('No permission to edit this reservation');
+  }
+
+  // Special handling for status changes - only users with review_status permission can change status
+  if (isset($data['status']) && $data['status'] !== $reservation['status']) {
+    if (!canReviewReservationStatus($userId) && $reservation['user_id'] != $userId) {
+      throw new Exception('No permission to change reservation status');
     }
   }
   $fields = [
