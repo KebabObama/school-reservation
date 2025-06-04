@@ -14,7 +14,7 @@ try {
   $stmt = $pdo->prepare("SELECT can_manage_users FROM permissions WHERE user_id = ?");
   $stmt->execute([$_SESSION['user_id']]);
   $canManage = $stmt->fetchColumn();
-  
+
   if (!$canManage) {
     echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to create reservation purposes.</p></div>';
     return;
@@ -100,13 +100,13 @@ try {
           
           const result = await response.json();
           if (response.ok && result.purpose_id) {
-            alert('Purpose created successfully!');
+            popupSystem.success('Purpose created successfully!');
             loadPage('ReservationPurposes');
           } else {
-            alert('Error: ' + (result.error || 'Unknown error'));
+            popupSystem.error(result.error || 'Unknown error');
           }
         } catch (error) {
-          alert('Network error: ' + error.message);
+          popupSystem.error('Network error: ' + error.message);
         }
       })()"
       class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Create Purpose</button>
@@ -114,19 +114,19 @@ try {
 </form>
 
 <script>
-// Add some basic validation
-document.getElementById('name').addEventListener('input', function() {
-  const value = this.value.trim();
-  const button = document.querySelector('button[onclick*="create.php"]');
-  
-  if (value.length < 2) {
-    this.classList.add('border-red-300');
-    button.disabled = true;
-    button.classList.add('opacity-50', 'cursor-not-allowed');
-  } else {
-    this.classList.remove('border-red-300');
-    button.disabled = false;
-    button.classList.remove('opacity-50', 'cursor-not-allowed');
-  }
-});
+  // Add some basic validation
+  document.getElementById('name').addEventListener('input', function() {
+    const value = this.value.trim();
+    const button = document.querySelector('button[onclick*="create.php"]');
+
+    if (value.length < 2) {
+      this.classList.add('border-red-300');
+      button.disabled = true;
+      button.classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+      this.classList.remove('border-red-300');
+      button.disabled = false;
+      button.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+  });
 </script>

@@ -1,33 +1,33 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+  session_start();
 }
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: /');
-    exit;
+  header('Location: /');
+  exit;
 }
 
 require_once __DIR__ . '/../lib/db.php';
 
 // Check if user has permission to manage users
 try {
-    $stmt = $pdo->prepare("SELECT can_manage_users FROM permissions WHERE user_id = ?");
-    $stmt->execute([$_SESSION['user_id']]);
-    $canManageUsers = $stmt->fetchColumn();
-    
-    if (!$canManageUsers) {
-        echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to manage user permissions.</p></div>';
-        return;
-    }
-} catch (Exception $e) {
-    echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Unable to verify permissions.</p></div>';
+  $stmt = $pdo->prepare("SELECT can_manage_users FROM permissions WHERE user_id = ?");
+  $stmt->execute([$_SESSION['user_id']]);
+  $canManageUsers = $stmt->fetchColumn();
+
+  if (!$canManageUsers) {
+    echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to manage user permissions.</p></div>';
     return;
+  }
+} catch (Exception $e) {
+  echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Unable to verify permissions.</p></div>';
+  return;
 }
 
 // Get users with their permissions
 try {
-    $usersWithPermissions = $pdo->query("
+  $usersWithPermissions = $pdo->query("
         SELECT u.id, u.email, u.name, u.surname, u.is_verified,
                p.can_add_room, p.can_verify_users, p.can_manage_reservations,
                p.can_manage_users, p.can_manage_rooms, p.can_accept_reservations
@@ -36,84 +36,84 @@ try {
         ORDER BY u.name, u.surname
     ")->fetchAll();
 } catch (Exception $e) {
-    $usersWithPermissions = [];
+  $usersWithPermissions = [];
 }
 
 $permissions = [
-    'can_add_room' => 'Add Rooms',
-    'can_verify_users' => 'Verify Users',
-    'can_manage_reservations' => 'Manage Reservations',
-    'can_manage_users' => 'Manage Users',
-    'can_manage_rooms' => 'Manage Rooms',
-    'can_accept_reservations' => 'Accept Reservations'
+  'can_add_room' => 'Add Rooms',
+  'can_verify_users' => 'Verify Users',
+  'can_manage_reservations' => 'Manage Reservations',
+  'can_manage_users' => 'Manage Users',
+  'can_manage_rooms' => 'Manage Rooms',
+  'can_accept_reservations' => 'Accept Reservations'
 ];
 ?>
 
 <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex justify-between items-center">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">Permission Management</h1>
-            <p class="text-gray-600">Manage individual user permissions with detailed controls</p>
-        </div>
-        <button onclick="loadPage('Permissions')"
-            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-            </svg>
-            Back to Overview
-        </button>
+  <!-- Header -->
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">Permission Management</h1>
+      <p class="text-gray-600">Manage individual user permissions with detailed controls</p>
+    </div>
+    <button onclick="loadPage('Permissions')"
+      class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center">
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+      </svg>
+      Back to Overview
+    </button>
+  </div>
+
+  <!-- Users List -->
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h2 class="text-lg font-medium text-gray-900">Users & Permissions</h2>
     </div>
 
-    <!-- Users List -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-medium text-gray-900">Users & Permissions</h2>
-        </div>
-        
-        <div class="divide-y divide-gray-200">
-            <?php foreach ($usersWithPermissions as $user): ?>
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                                <span class="text-sm font-medium text-gray-700">
-                                    <?php echo strtoupper(substr($user['name'], 0, 1) . substr($user['surname'], 0, 1)); ?>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="ml-4">
-                            <div class="flex items-center">
-                                <h3 class="text-lg font-medium text-gray-900">
-                                    <?php echo htmlspecialchars($user['name'] . ' ' . $user['surname']); ?>
-                                </h3>
-                                <?php if ($user['is_verified']): ?>
-                                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        Verified
-                                    </span>
-                                <?php else: ?>
-                                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                        Unverified
-                                    </span>
-                                <?php endif; ?>
-                            </div>
-                            <p class="text-sm text-gray-500"><?php echo htmlspecialchars($user['email']); ?></p>
-                        </div>
-                    </div>
+    <div class="divide-y divide-gray-200">
+      <?php foreach ($usersWithPermissions as $user): ?>
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                  <span class="text-sm font-medium text-gray-700">
+                    <?php echo strtoupper(substr($user['name'], 0, 1) . substr($user['surname'], 0, 1)); ?>
+                  </span>
                 </div>
+              </div>
+              <div class="ml-4">
+                <div class="flex items-center">
+                  <h3 class="text-lg font-medium text-gray-900">
+                    <?php echo htmlspecialchars($user['name'] . ' ' . $user['surname']); ?>
+                  </h3>
+                  <?php if ($user['is_verified']): ?>
+                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Verified
+                    </span>
+                  <?php else: ?>
+                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      Unverified
+                    </span>
+                  <?php endif; ?>
+                </div>
+                <p class="text-sm text-gray-500"><?php echo htmlspecialchars($user['email']); ?></p>
+              </div>
+            </div>
+          </div>
 
-                <!-- Permission Controls -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <?php foreach ($permissions as $perm => $label): ?>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <span class="text-sm font-medium text-gray-700"><?php echo $label; ?></span>
-                        <div class="flex items-center space-x-2">
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" 
-                                       <?php echo $user[$perm] ? 'checked' : ''; ?>
-                                       class="sr-only peer"
-                                       onchange="(async function(event) {
+          <!-- Permission Controls -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <?php foreach ($permissions as $perm => $label): ?>
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span class="text-sm font-medium text-gray-700"><?php echo $label; ?></span>
+                <div class="flex items-center space-x-2">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox"
+                      <?php echo $user[$perm] ? 'checked' : ''; ?>
+                      class="sr-only peer"
+                      onchange="(async function(event) {
                                            const checkbox = event.target;
                                            const userId = <?php echo $user['id']; ?>;
                                            const permission = '<?php echo $perm; ?>';
@@ -140,24 +140,24 @@ $permissions = [
                                                        container.style.backgroundColor = '#f9fafb';
                                                    }, 1000);
                                                } else {
-                                                   alert('Error: ' + (result.error || 'Unknown error'));
+                                                   popupSystem.error(result.error || 'Unknown error');
                                                    checkbox.checked = !isChecked; // Revert
                                                }
                                            } catch (error) {
-                                               alert('Network error: ' + error.message);
+                                               popupSystem.error('Network error: ' + error.message);
                                                checkbox.checked = !isChecked; // Revert
                                            }
                                        })(event)">
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                            </label>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
                 </div>
+              </div>
+            <?php endforeach; ?>
+          </div>
 
-                <!-- Quick Actions -->
-                <div class="mt-4 flex space-x-2">
-                    <button onclick="(async function() {
+          <!-- Quick Actions -->
+          <div class="mt-4 flex space-x-2">
+            <button onclick="(async function() {
                         if (!confirm('Grant all permissions to this user?')) return;
                         
                         const userId = <?php echo $user['id']; ?>;
@@ -184,11 +184,11 @@ $permissions = [
                             alert('Network error: ' + error.message);
                         }
                     })()"
-                    class="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">
-                        Grant All
-                    </button>
-                    
-                    <button onclick="(async function() {
+              class="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">
+              Grant All
+            </button>
+
+            <button onclick="(async function() {
                         if (!confirm('Revoke all permissions from this user?')) return;
                         
                         const userId = <?php echo $user['id']; ?>;
@@ -214,12 +214,12 @@ $permissions = [
                             alert('Network error: ' + error.message);
                         }
                     })()"
-                    class="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700">
-                        Revoke All
-                    </button>
-                </div>
-            </div>
-            <?php endforeach; ?>
+              class="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700">
+              Revoke All
+            </button>
+          </div>
         </div>
+      <?php endforeach; ?>
     </div>
+  </div>
 </div>

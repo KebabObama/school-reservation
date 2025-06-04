@@ -3,9 +3,9 @@ session_start();
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
+  http_response_code(401);
+  echo json_encode(['error' => 'Not authenticated']);
+  exit;
 }
 
 require_once __DIR__ . '/../../lib/db.php';
@@ -14,35 +14,28 @@ $userId = $_SESSION['user_id'];
 $data = json_decode(file_get_contents('php://input'), true);
 
 if (empty($data['id'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Reservation ID is required']);
-    exit;
+  http_response_code(400);
+  echo json_encode(['error' => 'Reservation ID is required']);
+  exit;
 }
 
 try {
-    // Check if reservation exists and belongs to user (or user has permission)
-    $stmt = $pdo->prepare("SELECT * FROM reservations WHERE id = ?");
-    $stmt->execute([$data['id']]);
-    $reservation = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$reservation) {
-        throw new Exception('Reservation not found');
-    }
-
-    if ($reservation['user_id'] != $userId) {
-        $permStmt = $pdo->prepare("SELECT can_manage_reservations FROM permissions WHERE user_id = ?");
-        $permStmt->execute([$userId]);
-        $perm = $permStmt->fetchColumn();
-        if (!$perm) {
-            throw new Exception('No permission to delete this reservation');
-        }
-    }
-
-    // You can do soft-delete (update status) or hard-delete. We'll do hard-delete here:
-    $stmt = $pdo->prepare("DELETE FROM reservations WHERE id = ?");
-    $stmt->execute([$data['id']]);
-
-    echo json_encode(['success' => true]);
+  $stmt = $pdo->prepare("SELECT * FROM reservations WHERE id = ?");
+  $stmt->execute([$data['id']]);
+  $reservation = $stmt->fetch(PDO::FETCH_ASSOC);
+  if (!$reservation)
+    throw new Exception('Reservation not found');
+  if ($reservation['user_id'] != $userId) {
+    $permStmt = $pdo->prepare("SELECT can_manage_reservations FROM permissions WHERE user_id = ?");
+    $permStmt->execute([$userId]);
+    $perm = $permStmt->fetchColumn();
+    if (!$perm)
+      throw new Exception('No permission to delete this reservation');
+  }
+  $stmt = $pdo->prepare("DELETE FROM reservations WHERE id = ?");
+  $stmt->execute([$data['id']]);
+  echo json_encode(['success' => true]);
 } catch (Exception $e) {
-    http_response_code(400);
-    echo json_encode(['error' => $e->getMessage()]);
+  http_response_code(400);
+  echo json_encode(['error' => $e->getMessage()]);
 }

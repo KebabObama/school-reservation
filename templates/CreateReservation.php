@@ -135,13 +135,13 @@ try {
           
           const result = await response.json();
           if (response.ok && result.reservation_id) {
-            alert('Reservation created successfully!');
+            popupSystem.success('Reservation created successfully!');
             loadPage('Reservations');
           } else {
-            alert('Error: ' + (result.error || 'Unknown error'));
+            popupSystem.error(result.error || 'Unknown error');
           }
         } catch (error) {
-          alert('Network error: ' + error.message);
+          popupSystem.error('Network error: ' + error.message);
         }
       })()"
       class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Create Reservation</button>

@@ -14,7 +14,7 @@ try {
   $stmt = $pdo->prepare("SELECT can_manage_users FROM permissions WHERE user_id = ?");
   $stmt->execute([$_SESSION['user_id']]);
   $canManage = $stmt->fetchColumn();
-  
+
   if (!$canManage) {
     echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to edit reservation purposes.</p></div>';
     return;
@@ -36,12 +36,12 @@ try {
   $stmt = $pdo->prepare("SELECT * FROM reservation_purposes WHERE id = ?");
   $stmt->execute([$purposeId]);
   $purpose = $stmt->fetch();
-  
+
   if (!$purpose) {
     echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Purpose not found.</p></div>';
     return;
   }
-  
+
   // Get usage count
   $stmt = $pdo->prepare("SELECT COUNT(*) FROM reservations WHERE purpose_id = ?");
   $stmt->execute([$purposeId]);
@@ -92,7 +92,7 @@ try {
   </div>
 
   <div class="flex items-center">
-    <input id="requires_approval" name="requires_approval" type="checkbox" 
+    <input id="requires_approval" name="requires_approval" type="checkbox"
       <?php echo $purpose['requires_approval'] ? 'checked' : ''; ?>
       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
     <label for="requires_approval" class="ml-2 block text-sm text-gray-900">
@@ -105,21 +105,21 @@ try {
 
   <!-- Impact Warning -->
   <?php if ($usageCount > 0): ?>
-  <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-    <div class="flex">
-      <div class="flex-shrink-0">
-        <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-        </svg>
-      </div>
-      <div class="ml-3">
-        <h3 class="text-sm font-medium text-yellow-800">Important Notice</h3>
-        <div class="mt-2 text-sm text-yellow-700">
-          <p>Changes to this purpose will affect all <?php echo $usageCount; ?> reservation<?php echo $usageCount !== 1 ? 's' : ''; ?> that use this purpose. If you change the approval requirement, it will apply to future reservations only.</p>
+    <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-yellow-800">Important Notice</h3>
+          <div class="mt-2 text-sm text-yellow-700">
+            <p>Changes to this purpose will affect all <?php echo $usageCount; ?> reservation<?php echo $usageCount !== 1 ? 's' : ''; ?> that use this purpose. If you change the approval requirement, it will apply to future reservations only.</p>
+          </div>
         </div>
       </div>
     </div>
-  </div>
   <?php endif; ?>
 
   <!-- Guidelines -->
@@ -196,13 +196,13 @@ try {
           
           const result = await response.json();
           if (response.ok) {
-            alert('Purpose updated successfully!');
+            popupSystem.success('Purpose updated successfully!');
             loadPage('ReservationPurposes');
           } else {
-            alert('Error: ' + (result.error || 'Unknown error'));
+            popupSystem.error(result.error || 'Unknown error');
           }
         } catch (error) {
-          alert('Network error: ' + error.message);
+          popupSystem.error('Network error: ' + error.message);
         }
       })()"
       class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Update Purpose</button>
@@ -210,28 +210,28 @@ try {
 </form>
 
 <script>
-// Add validation
-document.getElementById('name').addEventListener('input', function() {
-  const value = this.value.trim();
-  const button = document.querySelector('button[onclick*="edit.php"]');
-  
-  if (value.length < 2) {
-    this.classList.add('border-red-300');
-    button.disabled = true;
-    button.classList.add('opacity-50', 'cursor-not-allowed');
-  } else {
-    this.classList.remove('border-red-300');
-    button.disabled = false;
-    button.classList.remove('opacity-50', 'cursor-not-allowed');
-  }
-});
+  // Add validation
+  document.getElementById('name').addEventListener('input', function() {
+    const value = this.value.trim();
+    const button = document.querySelector('button[onclick*="edit.php"]');
 
-document.getElementById('description').addEventListener('input', function() {
-  const value = this.value.trim();
-  if (value.length < 10) {
-    this.classList.add('border-red-300');
-  } else {
-    this.classList.remove('border-red-300');
-  }
-});
+    if (value.length < 2) {
+      this.classList.add('border-red-300');
+      button.disabled = true;
+      button.classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+      this.classList.remove('border-red-300');
+      button.disabled = false;
+      button.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+  });
+
+  document.getElementById('description').addEventListener('input', function() {
+    const value = this.value.trim();
+    if (value.length < 10) {
+      this.classList.add('border-red-300');
+    } else {
+      this.classList.remove('border-red-300');
+    }
+  });
 </script>

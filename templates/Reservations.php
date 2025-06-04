@@ -10,33 +10,29 @@ if (!isset($_SESSION['user_id'])) {
 
 require_once __DIR__ . '/../lib/db.php';
 
-// Get reservations with related data
-try {
-  $reservations = $pdo->query("
-        SELECT r.*, u.name as user_name, u.surname as user_surname, u.email as user_email,
-               rm.name as room_name, rp.name as purpose_name,
-               approver.name as approver_name, approver.surname as approver_surname
-        FROM reservations r
-        JOIN users u ON r.user_id = u.id
-        JOIN rooms rm ON r.room_id = rm.id
-        LEFT JOIN reservation_purposes rp ON r.purpose_id = rp.id
-        LEFT JOIN users approver ON r.approved_by = approver.id
-        ORDER BY r.start_time DESC
-        LIMIT 50
-    ")->fetchAll();
-} catch (Exception $e) {
-  $reservations = [];
-}
+// Get reservations with user and room information
+$stmt = $pdo->prepare("
+  SELECT r.*,
+         u.name as user_name, u.surname as user_surname, u.email as user_email,
+         rm.name as room_name
+  FROM reservations r
+  LEFT JOIN users u ON r.user_id = u.id
+  LEFT JOIN rooms rm ON r.room_id = rm.id
+  ORDER BY r.created_at DESC
+");
+$stmt->execute();
+$reservations = $stmt->fetchAll();
 
 // Get status counts
-try {
-  $statusCounts = $pdo->query("
-        SELECT status, COUNT(*) as count
-        FROM reservations
-        GROUP BY status
-    ")->fetchAll(PDO::FETCH_KEY_PAIR);
-} catch (Exception $e) {
-  $statusCounts = [];
+$stmt = $pdo->prepare("
+  SELECT status, COUNT(*) as count 
+  FROM reservations 
+  GROUP BY status
+");
+$stmt->execute();
+$statusCounts = [];
+foreach ($stmt->fetchAll() as $row) {
+  $statusCounts[$row['status']] = $row['count'];
 }
 ?>
 
@@ -56,97 +52,9 @@ try {
     </button>
   </div>
 
-  <!-- Status Overview -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <div class="bg-white rounded-lg shadow p-4">
-      <div class="flex items-center">
-        <div class="p-2 rounded-full bg-yellow-100 text-yellow-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-        </div>
-        <div class="ml-3">
-          <p class="text-sm font-medium text-gray-600">Pending</p>
-          <p class="text-lg font-semibold text-gray-900"><?php echo $statusCounts['pending'] ?? 0; ?></p>
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-lg shadow p-4">
-      <div class="flex items-center">
-        <div class="p-2 rounded-full bg-green-100 text-green-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-          </svg>
-        </div>
-        <div class="ml-3">
-          <p class="text-sm font-medium text-gray-600">Accepted</p>
-          <p class="text-lg font-semibold text-gray-900"><?php echo $statusCounts['accepted'] ?? 0; ?></p>
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-lg shadow p-4">
-      <div class="flex items-center">
-        <div class="p-2 rounded-full bg-red-100 text-red-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </div>
-        <div class="ml-3">
-          <p class="text-sm font-medium text-gray-600">Rejected</p>
-          <p class="text-lg font-semibold text-gray-900"><?php echo $statusCounts['rejected'] ?? 0; ?></p>
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-lg shadow p-4">
-      <div class="flex items-center">
-        <div class="p-2 rounded-full bg-gray-100 text-gray-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728">
-            </path>
-          </svg>
-        </div>
-        <div class="ml-3">
-          <p class="text-sm font-medium text-gray-600">Cancelled</p>
-          <p class="text-lg font-semibold text-gray-900"><?php echo $statusCounts['cancelled'] ?? 0; ?></p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filters -->
-  <div class="bg-white rounded-lg shadow p-4">
-    <div class="flex flex-wrap gap-4">
-      <div class="flex-1 min-w-64">
-        <input type="text" placeholder="Search reservations..."
-          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-      </div>
-      <select class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <option value="">All Status</option>
-        <option value="pending">Pending</option>
-        <option value="accepted">Accepted</option>
-        <option value="rejected">Rejected</option>
-        <option value="cancelled">Cancelled</option>
-      </select>
-      <select class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <option value="">All Rooms</option>
-      </select>
-      <input type="date"
-        class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-    </div>
-  </div>
-
   <!-- Reservations Table -->
   <?php if (empty($reservations)): ?>
   <div class="bg-white rounded-lg shadow p-8 text-center">
-    <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-    </svg>
     <h3 class="text-lg font-medium text-gray-900 mb-2">No reservations found</h3>
     <p class="text-gray-600 mb-4">No reservations have been made yet.</p>
     <button onclick="loadPage('CreateReservation')"
@@ -182,20 +90,15 @@ try {
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           <?php foreach ($reservations as $reservation): ?>
-          <tr class="hover:bg-gray-50">
+          <tr class="hover:bg-gray-50" data-reservation-id="<?php echo $reservation['id']; ?>">
             <td class="px-6 py-4">
               <div>
                 <div class="text-sm font-medium text-gray-900">
                   <?php echo htmlspecialchars($reservation['title']); ?>
                 </div>
-                <?php if ($reservation['purpose_name']): ?>
+                <?php if ($reservation['description']): ?>
                 <div class="text-sm text-gray-500">
-                  <?php echo htmlspecialchars($reservation['purpose_name']); ?>
-                </div>
-                <?php endif; ?>
-                <?php if ($reservation['attendees_count'] > 1): ?>
-                <div class="text-xs text-gray-400">
-                  <?php echo $reservation['attendees_count']; ?> attendees
+                  <?php echo htmlspecialchars($reservation['description']); ?>
                 </div>
                 <?php endif; ?>
               </div>
@@ -247,76 +150,111 @@ try {
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
               <div class="flex justify-end space-x-2">
-                <button class="text-blue-600 hover:text-blue-900" title="View Details">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
-                    </path>
-                  </svg>
-                </button>
                 <?php if ($reservation['status'] === 'pending'): ?>
-                <button onclick="(async function() {
-                        try {
-                          const response = await fetch('/api/reservations/edit.php', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({
-                              id: <?php echo $reservation['id']; ?>,
-                              status: 'accepted'
-                            }),
-                            credentials: 'same-origin'
-                          });
-                          
-                          const result = await response.json();
-                          if (response.ok) {
-                            alert('Reservation approved successfully!');
-                            location.reload();
-                          } else {
-                            alert('Error: ' + (result.error || 'Unknown error'));
-                          }
-                        } catch (error) {
-                          alert('Network error: ' + error.message);
-                        }
-                      })()" class="text-green-600 hover:text-green-900" title="Approve">
+                <button onclick="(async () => {
+                  try {
+                    const confirmed = await popupSystem.confirm(
+                      'Are you sure you want to approve this reservation?',
+                      'Approve Reservation',
+                      {
+                        confirmText: 'Approve',
+                        cancelText: 'Cancel',
+                        type: 'info'
+                      }
+                    );
+                    
+                    if (!confirmed) return;
+                    
+                    const response = await fetch('/api/reservations/edit.php', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        id: <?php echo $reservation['id']; ?>,
+                        status: 'accepted'
+                      })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                      // Update status badge
+                      const row = this.closest('tr');
+                      const statusCell = row.querySelector('td:nth-child(5) span');
+                      statusCell.className = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800';
+                      statusCell.textContent = 'Accepted';
+                      
+                      // Hide approve/reject buttons
+                      const actionButtons = row.querySelectorAll(`button[title='Approve'], button[title='Reject']`);
+                  actionButtons.forEach(btn=> btn.style.display = 'none');
+
+                  popupSystem.success('Reservation approved successfully!');
+                  } else {
+                  popupSystem.error('Error: ' + (data.error || 'Failed to approve reservation'));
+                  }
+                  } catch (error) {
+                  popupSystem.error('Network error: ' + error.message);
+                  }
+                  })()" class="text-green-600 hover:text-green-900" title="Approve">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                   </svg>
                 </button>
-                <button onclick="(async function() {
-                        const reason = prompt('Please provide a reason for rejection:');
-                        if (reason === null) return; // User cancelled
-                        
-                        try {
-                          const response = await fetch('/api/reservations/edit.php', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({
-                              id: <?php echo $reservation['id']; ?>,
-                              status: 'rejected',
-                              cancellation_reason: reason || null
-                            }),
-                            credentials: 'same-origin'
-                          });
-                          
-                          const result = await response.json();
-                          if (response.ok) {
-                            alert('Reservation rejected successfully!');
-                            location.reload();
-                          } else {
-                            alert('Error: ' + (result.error || 'Unknown error'));
+                <button onclick="(async () => {
+                  try {
+                    const reason = await popupSystem.prompt(
+                      'Please provide a reason for rejection:',
+                      'Reject Reservation',
+                      '',
+                      {
+                        required: true,
+                        minLength: 5,
+                        validator: (value) => {
+                          if (value.trim().length < 5) {
+                            return 'Please provide a detailed reason (at least 5 characters)';
                           }
-                        } catch (error) {
-                          alert('Network error: ' + error.message);
+                          return true;
                         }
-                      })()" class="text-red-600 hover:text-red-900" title="Reject">
+                      }
+                    );
+                    if (reason === null) return;
+                    const response = await fetch('/api/reservations/edit.php', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        id: <?php echo $reservation['id']; ?>,
+                        status: 'rejected',
+                        cancellation_reason: reason
+                      })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                      // Update status badge
+                      const row = this.closest('tr');
+                      const statusCell = row.querySelector('td:nth-child(5) span');
+                      statusCell.className = 'inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800';
+                      statusCell.textContent = 'Rejected';
+                      
+                      // Hide approve/reject buttons
+                      const actionButtons = row.querySelectorAll(`button[title='Approve'], button[title='Reject']`);
+                  actionButtons.forEach(btn=> btn.style.display = 'none');
+
+                  popupSystem.success('Reservation rejected successfully!');
+                  } else {
+                  popupSystem.error('Error: ' + (data.error || 'Failed to reject reservation'));
+                  }
+                  } catch (error) {
+                  popupSystem.error('Network error: ' + error.message);
+                  }
+                  })()" class="text-red-600 hover:text-red-900" title="Reject">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
                     </path>
                   </svg>
                 </button>
                 <?php endif; ?>
+
                 <button onclick="loadPage('EditReservation&id=<?php echo $reservation['id']; ?>')"
                   class="text-gray-400 hover:text-blue-600" title="Edit Reservation">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -325,6 +263,17 @@ try {
                     </path>
                   </svg>
                 </button>
+
+                <?php if (empty($reservation['parent_reservation_id'])): ?>
+                <button onclick="deleteReservation(<?php echo $reservation['id']; ?>)"
+                  class="text-gray-400 hover:text-red-600" title="Delete Reservation">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                    </path>
+                  </svg>
+                </button>
+                <?php endif; ?>
               </div>
             </td>
           </tr>
@@ -337,5 +286,44 @@ try {
 </div>
 
 <script>
-// No global updateReservationStatus function needed anymore
+async function deleteReservation(reservationId) {
+  try {
+    const confirmed = await popupSystem.confirm(
+      'Are you sure you want to delete this reservation?',
+      'Delete Reservation', {
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        type: 'danger'
+      }
+    );
+
+    if (!confirmed) return;
+
+    const response = await fetch('/api/reservations/delete.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        id: reservationId
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Remove the row from the table
+      const row = document.querySelector(`tr[data-reservation-id="${reservationId}"]`);
+      if (row) {
+        row.style.opacity = '0';
+        setTimeout(() => row.remove(), 300);
+      }
+      popupSystem.success('Reservation deleted successfully');
+    } else {
+      popupSystem.error('Error: ' + (data.error || 'Failed to delete reservation'));
+    }
+  } catch (error) {
+    popupSystem.error('Network error: ' + error.message);
+  }
+}
 </script>

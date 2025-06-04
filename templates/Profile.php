@@ -141,7 +141,7 @@ if (!$user) {
     <div class="bg-white rounded-lg shadow p-6">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-lg font-semibold text-gray-900">Profile Information</h2>
-        <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+        <button onclick="editProfile()" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
           Edit Profile
         </button>
       </div>
@@ -229,7 +229,7 @@ if (!$user) {
           <h3 class="text-sm font-medium text-gray-900">Password</h3>
           <p class="text-sm text-gray-600">Last updated: Never</p>
         </div>
-        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+        <button onclick="changePassword()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
           Change Password
         </button>
       </div>
@@ -248,3 +248,190 @@ if (!$user) {
     </div>
   </div>
 </div>
+
+<script>
+  async function editProfile() {
+    // Get current user data
+    const currentName = '<?php echo addslashes($user['name']); ?>';
+    const currentSurname = '<?php echo addslashes($user['surname']); ?>';
+    const currentEmail = '<?php echo addslashes($user['email']); ?>';
+
+    // Create a simple form dialog using multiple prompts
+    try {
+      const name = await popupSystem.prompt(
+        'Enter your first name:',
+        'Edit Profile - First Name',
+        currentName, {
+          required: true,
+          minLength: 2,
+          validator: (value) => {
+            if (value.trim().length < 2) {
+              return 'Name must be at least 2 characters long';
+            }
+            return true;
+          }
+        }
+      );
+
+      if (name === null) return; // User cancelled
+
+      const surname = await popupSystem.prompt(
+        'Enter your last name:',
+        'Edit Profile - Last Name',
+        currentSurname, {
+          required: true,
+          minLength: 2,
+          validator: (value) => {
+            if (value.trim().length < 2) {
+              return 'Surname must be at least 2 characters long';
+            }
+            return true;
+          }
+        }
+      );
+
+      if (surname === null) return; // User cancelled
+
+      const email = await popupSystem.prompt(
+        'Enter your email address:',
+        'Edit Profile - Email',
+        currentEmail, {
+          inputType: 'email',
+          required: true,
+          validator: (value) => {
+            if (!value.includes('@')) {
+              return 'Please enter a valid email address';
+            }
+            return true;
+          }
+        }
+      );
+
+      if (email === null) return; // User cancelled
+
+      // Confirm changes
+      const confirmed = await popupSystem.confirm(
+        `Update profile with:\nName: ${name} ${surname}\nEmail: ${email}`,
+        'Confirm Profile Update'
+      );
+
+      if (!confirmed) return;
+
+      // Submit the changes
+      try {
+        const response = await fetch('/api/users/update-profile.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: name.trim(),
+            surname: surname.trim(),
+            email: email.trim()
+          }),
+          credentials: 'same-origin'
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          popupSystem.success('Profile updated successfully!');
+          // Reload the page to show updated information
+          setTimeout(() => {
+            location.reload();
+          }, 1500);
+        } else {
+          popupSystem.error(result.error || 'Failed to update profile');
+        }
+      } catch (error) {
+        popupSystem.error('Network error: ' + error.message);
+      }
+
+    } catch (error) {
+      popupSystem.error('Error updating profile: ' + error.message);
+    }
+  }
+
+  async function changePassword() {
+    try {
+      const currentPassword = await popupSystem.prompt(
+        'Enter your current password:',
+        'Change Password - Current Password',
+        '', {
+          inputType: 'password',
+          required: true,
+          minLength: 1
+        }
+      );
+
+      if (currentPassword === null) return; // User cancelled
+
+      const newPassword = await popupSystem.prompt(
+        'Enter your new password:',
+        'Change Password - New Password',
+        '', {
+          inputType: 'password',
+          required: true,
+          minLength: 6,
+          validator: (value) => {
+            if (value.length < 6) {
+              return 'Password must be at least 6 characters long';
+            }
+            if (!/[A-Z]/.test(value)) {
+              return 'Password must contain at least one uppercase letter';
+            }
+            if (!/[0-9]/.test(value)) {
+              return 'Password must contain at least one number';
+            }
+            return true;
+          }
+        }
+      );
+
+      if (newPassword === null) return; // User cancelled
+
+      const confirmPassword = await popupSystem.prompt(
+        'Confirm your new password:',
+        'Change Password - Confirm Password',
+        '', {
+          inputType: 'password',
+          required: true,
+          validator: (value) => {
+            if (value !== newPassword) {
+              return 'Passwords do not match';
+            }
+            return true;
+          }
+        }
+      );
+
+      if (confirmPassword === null) return; // User cancelled
+
+      // Submit the password change
+      try {
+        const response = await fetch('/api/users/update-profile.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            current_password: currentPassword,
+            password: newPassword
+          }),
+          credentials: 'same-origin'
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          popupSystem.success('Password changed successfully!');
+        } else {
+          popupSystem.error(result.error || 'Failed to change password');
+        }
+      } catch (error) {
+        popupSystem.error('Network error: ' + error.message);
+      }
+
+    } catch (error) {
+      popupSystem.error('Error changing password: ' + error.message);
+    }
+  }
+</script>

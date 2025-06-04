@@ -14,7 +14,7 @@ try {
   $stmt = $pdo->prepare("SELECT can_manage_rooms FROM permissions WHERE user_id = ?");
   $stmt->execute([$_SESSION['user_id']]);
   $canManage = $stmt->fetchColumn();
-  
+
   if (!$canManage) {
     echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to edit rooms.</p></div>';
     return;
@@ -36,15 +36,15 @@ try {
   $stmt = $pdo->prepare("SELECT * FROM rooms WHERE id = ?");
   $stmt->execute([$roomId]);
   $room = $stmt->fetch();
-  
+
   if (!$room) {
     echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Room not found.</p></div>';
     return;
   }
-  
+
   // Get room types
   $roomTypes = $pdo->query("SELECT id, name FROM room_types ORDER BY name")->fetchAll();
-  
+
   // Parse JSON fields
   $features = $room['features'] ? json_decode($room['features'], true) : [];
   $availability = $room['availability_schedule'] ? json_decode($room['availability_schedule'], true) : [];
@@ -149,7 +149,7 @@ try {
   <div>
     <label class="block mb-3 font-medium text-gray-700">Room Features *</label>
     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-      <?php 
+      <?php
       $availableFeatures = [
         'projector' => 'Projector',
         'whiteboard' => 'Whiteboard',
@@ -164,7 +164,7 @@ try {
         'parking' => 'Parking Available',
         'security' => '24/7 Security'
       ];
-      
+
       foreach ($availableFeatures as $key => $label): ?>
         <label class="flex items-center">
           <input type="checkbox" name="features[]" value="<?php echo $key; ?>"
@@ -216,13 +216,13 @@ try {
           
           const result = await response.json();
           if (response.ok) {
-            alert('Room updated successfully!');
+            popupSystem.success('Room updated successfully!');
             loadPage('Rooms');
           } else {
-            alert('Error: ' + (result.error || 'Unknown error'));
+            popupSystem.error(result.error || 'Unknown error');
           }
         } catch (error) {
-          alert('Network error: ' + error.message);
+          popupSystem.error('Network error: ' + error.message);
         }
       })()"
       class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Update Room</button>
@@ -230,30 +230,30 @@ try {
 </form>
 
 <script>
-// Add validation
-document.getElementById('name').addEventListener('input', function() {
-  const value = this.value.trim();
-  if (value.length < 2) {
-    this.classList.add('border-red-300');
-  } else {
-    this.classList.remove('border-red-300');
-  }
-});
+  // Add validation
+  document.getElementById('name').addEventListener('input', function() {
+    const value = this.value.trim();
+    if (value.length < 2) {
+      this.classList.add('border-red-300');
+    } else {
+      this.classList.remove('border-red-300');
+    }
+  });
 
-// Ensure at least one feature is selected
-function validateFeatures() {
-  const checkboxes = document.querySelectorAll('input[name="features[]"]');
-  const checked = Array.from(checkboxes).some(cb => cb.checked);
-  
-  if (!checked) {
-    alert('Please select at least one room feature.');
-    return false;
-  }
-  return true;
-}
+  // Ensure at least one feature is selected
+  function validateFeatures() {
+    const checkboxes = document.querySelectorAll('input[name="features[]"]');
+    const checked = Array.from(checkboxes).some(cb => cb.checked);
 
-// Add feature validation to submit button
-const submitButton = document.querySelector('button[onclick*="edit.php"]');
-const originalOnclick = submitButton.getAttribute('onclick');
-submitButton.setAttribute('onclick', 'if (validateFeatures()) { ' + originalOnclick + ' }');
+    if (!checked) {
+      alert('Please select at least one room feature.');
+      return false;
+    }
+    return true;
+  }
+
+  // Add feature validation to submit button
+  const submitButton = document.querySelector('button[onclick*="edit.php"]');
+  const originalOnclick = submitButton.getAttribute('onclick');
+  submitButton.setAttribute('onclick', 'if (validateFeatures()) { ' + originalOnclick + ' }');
 </script>

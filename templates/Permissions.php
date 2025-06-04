@@ -124,11 +124,19 @@ $permissionLabels = [
                 </td>
                 <?php foreach ($permissionLabels as $key => $label): ?>
                   <td class="px-3 py-4 whitespace-nowrap text-center">
-                    <input type="checkbox"
-                      class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      <?php echo $user[$key] ? 'checked' : ''; ?>
-                      data-user-id="<?php echo $user['id']; ?>"
-                      data-permission="<?php echo $key; ?>">
+                    <?php if ($user[$key]): ?>
+                      <span class="inline-flex items-center justify-center">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                      </span>
+                    <?php else: ?>
+                      <span class="inline-flex items-center justify-center">
+                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                      </span>
+                    <?php endif; ?>
                   </td>
                 <?php endforeach; ?>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -198,12 +206,12 @@ $permissionLabels = [
               row.style.backgroundColor = '';
             }, 1000);
           } else {
-            alert('Error: ' + (result.error || 'Unknown error'));
+            popupSystem.error(result.error || 'Unknown error');
             e.target.checked = !isChecked; // Revert checkbox
           }
         })
         .catch(error => {
-          alert('Network error: ' + error.message);
+          popupSystem.error('Network error: ' + error.message);
           e.target.checked = !isChecked; // Revert checkbox
         });
     }

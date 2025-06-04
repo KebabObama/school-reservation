@@ -29,12 +29,12 @@ try {
   ");
   $stmt->execute([$reservationId]);
   $reservation = $stmt->fetch();
-  
+
   if (!$reservation) {
     echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Reservation not found.</p></div>';
     return;
   }
-  
+
   // Check permissions - allow if owner or has can_manage_reservations
   $canEdit = false;
   if ($reservation['user_id'] == $_SESSION['user_id']) {
@@ -44,16 +44,15 @@ try {
     $stmt->execute([$_SESSION['user_id']]);
     $canEdit = $stmt->fetchColumn();
   }
-  
+
   if (!$canEdit) {
     echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to edit this reservation.</p></div>';
     return;
   }
-  
+
   // Get rooms and purposes for dropdowns
   $rooms = $pdo->query("SELECT id, name FROM rooms WHERE is_active = 1 ORDER BY name")->fetchAll();
   $purposes = $pdo->query("SELECT id, name FROM reservation_purposes ORDER BY name")->fetchAll();
-  
 } catch (Exception $e) {
   echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Unable to load reservation data.</p></div>';
   return;
@@ -86,11 +85,20 @@ try {
         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
           <?php
           switch ($reservation['status']) {
-            case 'accepted': echo 'bg-green-100 text-green-800'; break;
-            case 'pending': echo 'bg-yellow-100 text-yellow-800'; break;
-            case 'rejected': echo 'bg-red-100 text-red-800'; break;
-            case 'cancelled': echo 'bg-gray-100 text-gray-800'; break;
-            default: echo 'bg-gray-100 text-gray-800';
+            case 'accepted':
+              echo 'bg-green-100 text-green-800';
+              break;
+            case 'pending':
+              echo 'bg-yellow-100 text-yellow-800';
+              break;
+            case 'rejected':
+              echo 'bg-red-100 text-red-800';
+              break;
+            case 'cancelled':
+              echo 'bg-gray-100 text-gray-800';
+              break;
+            default:
+              echo 'bg-gray-100 text-gray-800';
           }
           ?>">
           <?php echo ucfirst($reservation['status']); ?>
@@ -110,10 +118,10 @@ try {
         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
         <option value="">Select a room</option>
         <?php foreach ($rooms as $room): ?>
-        <option value="<?php echo $room['id']; ?>"
-          <?php echo $reservation['room_id'] == $room['id'] ? 'selected' : ''; ?>>
-          <?php echo htmlspecialchars($room['name']); ?>
-        </option>
+          <option value="<?php echo $room['id']; ?>"
+            <?php echo $reservation['room_id'] == $room['id'] ? 'selected' : ''; ?>>
+            <?php echo htmlspecialchars($room['name']); ?>
+          </option>
         <?php endforeach; ?>
       </select>
     </div>
@@ -124,10 +132,10 @@ try {
         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
         <option value="">Select a purpose</option>
         <?php foreach ($purposes as $purpose): ?>
-        <option value="<?php echo $purpose['id']; ?>"
-          <?php echo $reservation['purpose_id'] == $purpose['id'] ? 'selected' : ''; ?>>
-          <?php echo htmlspecialchars($purpose['name']); ?>
-        </option>
+          <option value="<?php echo $purpose['id']; ?>"
+            <?php echo $reservation['purpose_id'] == $purpose['id'] ? 'selected' : ''; ?>>
+            <?php echo htmlspecialchars($purpose['name']); ?>
+          </option>
         <?php endforeach; ?>
       </select>
     </div>
@@ -208,39 +216,39 @@ try {
   </div>
 
   <!-- Status change section for users with can_accept_reservations permission -->
-  <?php 
+  <?php
   $stmt = $pdo->prepare("SELECT can_accept_reservations FROM permissions WHERE user_id = ?");
   $stmt->execute([$_SESSION['user_id']]);
   $canAcceptReservations = $stmt->fetchColumn();
-  
-  if ($canAcceptReservations): ?>
-  <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
-    <h3 class="text-lg font-medium text-blue-800 mb-3">Reservation Status Management</h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <label for="status" class="block mb-1 font-medium text-gray-700">Status</label>
-        <select id="status" name="status"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="pending" <?php echo $reservation['status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
-          <option value="accepted" <?php echo $reservation['status'] === 'accepted' ? 'selected' : ''; ?>>Accepted
-          </option>
-          <option value="rejected" <?php echo $reservation['status'] === 'rejected' ? 'selected' : ''; ?>>Rejected
-          </option>
-          <option value="cancelled" <?php echo $reservation['status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled
-          </option>
-        </select>
-      </div>
 
-      <div id="cancellation_reason_container"
-        class="<?php echo $reservation['status'] !== 'cancelled' && $reservation['status'] !== 'rejected' ? 'hidden' : ''; ?>">
-        <label for="cancellation_reason" class="block mb-1 font-medium text-gray-700">Cancellation/Rejection
-          Reason</label>
-        <textarea id="cancellation_reason" name="cancellation_reason" rows="2"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Reason for cancellation or rejection"><?php echo htmlspecialchars($reservation['cancellation_reason'] ?? ''); ?></textarea>
+  if ($canAcceptReservations): ?>
+    <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+      <h3 class="text-lg font-medium text-blue-800 mb-3">Reservation Status Management</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label for="status" class="block mb-1 font-medium text-gray-700">Status</label>
+          <select id="status" name="status"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="pending" <?php echo $reservation['status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
+            <option value="accepted" <?php echo $reservation['status'] === 'accepted' ? 'selected' : ''; ?>>Accepted
+            </option>
+            <option value="rejected" <?php echo $reservation['status'] === 'rejected' ? 'selected' : ''; ?>>Rejected
+            </option>
+            <option value="cancelled" <?php echo $reservation['status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled
+            </option>
+          </select>
+        </div>
+
+        <div id="cancellation_reason_container"
+          class="<?php echo $reservation['status'] !== 'cancelled' && $reservation['status'] !== 'rejected' ? 'hidden' : ''; ?>">
+          <label for="cancellation_reason" class="block mb-1 font-medium text-gray-700">Cancellation/Rejection
+            Reason</label>
+          <textarea id="cancellation_reason" name="cancellation_reason" rows="2"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Reason for cancellation or rejection"><?php echo htmlspecialchars($reservation['cancellation_reason'] ?? ''); ?></textarea>
+        </div>
       </div>
     </div>
-  </div>
   <?php endif; ?>
 
   <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200">
@@ -266,13 +274,13 @@ try {
           
           const result = await response.json();
           if (response.ok) {
-            alert('Reservation updated successfully!');
+            popupSystem.success('Reservation updated successfully!');
             loadPage('Reservations');
           } else {
-            alert('Error: ' + (result.error || 'Unknown error'));
+            popupSystem.error(result.error || 'Unknown error');
           }
         } catch (error) {
-          alert('Network error: ' + error.message);
+          popupSystem.error('Network error: ' + error.message);
         }
       })()"
       class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Update
@@ -281,39 +289,39 @@ try {
 </form>
 
 <script>
-// Show/hide recurring end date based on recurring type
-document.getElementById('recurring_type').addEventListener('change', function() {
-  const container = document.getElementById('recurring_end_container');
-  if (this.value !== 'none') {
-    container.classList.remove('hidden');
-  } else {
-    container.classList.add('hidden');
-  }
-});
-
-// Show/hide cancellation reason based on status
-document.getElementById('status')?.addEventListener('change', function() {
-  const container = document.getElementById('cancellation_reason_container');
-  if (container) {
-    if (this.value === 'cancelled' || this.value === 'rejected') {
+  // Show/hide recurring end date based on recurring type
+  document.getElementById('recurring_type').addEventListener('change', function() {
+    const container = document.getElementById('recurring_end_container');
+    if (this.value !== 'none') {
       container.classList.remove('hidden');
     } else {
       container.classList.add('hidden');
     }
-  }
-});
+  });
 
-// Update end time minimum when start time changes
-document.getElementById('start_time').addEventListener('change', function() {
-  document.getElementById('end_time').min = this.value;
-});
+  // Show/hide cancellation reason based on status
+  document.getElementById('status')?.addEventListener('change', function() {
+    const container = document.getElementById('cancellation_reason_container');
+    if (container) {
+      if (this.value === 'cancelled' || this.value === 'rejected') {
+        container.classList.remove('hidden');
+      } else {
+        container.classList.add('hidden');
+      }
+    }
+  });
 
-// Validation
-document.getElementById('attendees_count').addEventListener('input', function() {
-  if (this.value < 1) {
-    this.classList.add('border-red-300');
-  } else {
-    this.classList.remove('border-red-300');
-  }
-});
+  // Update end time minimum when start time changes
+  document.getElementById('start_time').addEventListener('change', function() {
+    document.getElementById('end_time').min = this.value;
+  });
+
+  // Validation
+  document.getElementById('attendees_count').addEventListener('input', function() {
+    if (this.value < 1) {
+      this.classList.add('border-red-300');
+    } else {
+      this.classList.remove('border-red-300');
+    }
+  });
 </script>
