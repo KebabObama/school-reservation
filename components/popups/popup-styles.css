@@ -1,0 +1,245 @@
+/**
+ * Popup System CSS Styles
+ * Provides backward compatibility for legacy popup classes
+ * and ensures consistent styling across all popup components
+ */
+
+/* Legacy popup overlay styles for backward compatibility */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.popup-overlay.show {
+  opacity: 1;
+}
+
+/* Legacy popup content styles */
+.popup-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: auto;
+  transform: scale(0.95);
+  transition: transform 0.3s ease;
+  padding: 24px;
+  width: 400px;
+}
+
+.popup-overlay.show .popup-content {
+  transform: scale(1);
+}
+
+/* Legacy button styles */
+.popup-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.popup-btn:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+.popup-btn-primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.popup-btn-primary:hover {
+  background-color: #2563eb;
+}
+
+.popup-btn-secondary {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.popup-btn-secondary:hover {
+  background-color: #d1d5db;
+}
+
+.popup-btn-danger {
+  background-color: #ef4444;
+  color: white;
+}
+
+.popup-btn-danger:hover {
+  background-color: #dc2626;
+}
+
+.popup-btn-success {
+  background-color: #10b981;
+  color: white;
+}
+
+.popup-btn-success:hover {
+  background-color: #059669;
+}
+
+/* Confirm dialog specific styles */
+.confirm-dialog {
+  text-align: center;
+}
+
+.confirm-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fef3c7;
+  color: #f59e0b;
+}
+
+.confirm-dialog[data-type="danger"] .confirm-icon {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+.confirm-dialog[data-type="info"] .confirm-icon {
+  background-color: #dbeafe;
+  color: #3b82f6;
+}
+
+.confirm-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.confirm-message {
+  color: #6b7280;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* Input dialog specific styles */
+.input-dialog {
+  text-align: center;
+}
+
+.input-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.input-message {
+  color: #6b7280;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.input-field {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 24px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-field:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.input-field.error {
+  border-color: #ef4444;
+}
+
+.input-field.error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+.input-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.input-error {
+  color: #ef4444;
+  font-size: 14px;
+  margin-top: 4px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .popup-content {
+    width: 90vw;
+    padding: 20px;
+  }
+  
+  .confirm-actions,
+  .input-actions {
+    flex-direction: column;
+  }
+  
+  .popup-btn {
+    width: 100%;
+  }
+}
+
+/* Animation keyframes for smooth transitions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* Utility classes for consistent spacing */
+.popup-spacing {
+  margin-bottom: 16px;
+}
+
+.popup-spacing:last-child {
+  margin-bottom: 0;
+}

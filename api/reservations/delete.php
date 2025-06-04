@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../../lib/db.php';
+require_once __DIR__ . '/../../lib/permissions.php';
 
 $userId = $_SESSION['user_id'];
 $data = json_decode(file_get_contents('php://input'), true);
@@ -25,12 +26,8 @@ try {
   $reservation = $stmt->fetch(PDO::FETCH_ASSOC);
   if (!$reservation)
     throw new Exception('Reservation not found');
-  if ($reservation['user_id'] != $userId) {
-    $permStmt = $pdo->prepare("SELECT can_manage_reservations FROM permissions WHERE user_id = ?");
-    $permStmt->execute([$userId]);
-    $perm = $permStmt->fetchColumn();
-    if (!$perm)
-      throw new Exception('No permission to delete this reservation');
+  if (!canDeleteSpecificReservation($userId, $reservation['user_id'])) {
+    throw new Exception('No permission to delete this reservation');
   }
   $stmt = $pdo->prepare("DELETE FROM reservations WHERE id = ?");
   $stmt->execute([$data['id']]);

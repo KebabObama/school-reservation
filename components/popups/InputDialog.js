@@ -28,53 +28,57 @@ class InputDialog {
   }
 
   create() {
-    const overlay = document.createElement('div');
-    overlay.className = 'popup-overlay';
-    
-    const content = document.createElement('div');
-    content.className = 'popup-content input-dialog';
-    
+    // Create dialog content with Tailwind classes for consistent styling
+    const dialog = document.createElement('div');
+    dialog.className = 'w-[400px] p-6';
+
     // Build input attributes
     let inputAttributes = `
       type="${this.options.inputType}"
       placeholder="${this.escapeHtml(this.options.placeholder)}"
       value="${this.escapeHtml(this.defaultValue)}"
     `;
-    
+
     if (this.options.required) {
       inputAttributes += ' required';
     }
-    
+
     if (this.options.maxLength) {
       inputAttributes += ` maxlength="${this.options.maxLength}"`;
     }
-    
+
     if (this.options.minLength) {
       inputAttributes += ` minlength="${this.options.minLength}"`;
     }
-    
+
     if (this.options.pattern) {
       inputAttributes += ` pattern="${this.options.pattern}"`;
     }
-    
-    content.innerHTML = `
-      <div class="input-title">${this.escapeHtml(this.title)}</div>
-      <div class="input-message">${this.escapeHtml(this.message)}</div>
-      <input class="input-field" ${inputAttributes} />
-      <div class="input-actions">
-        <button class="popup-btn ${this.options.cancelClass}" onclick="this.closest('.popup-overlay').dispatchEvent(new CustomEvent('input-cancel'))">
+
+    // Get button styles
+    const { confirmButtonClass, cancelButtonClass } = this.getButtonClasses();
+
+    dialog.innerHTML = `
+      <h3 class="text-lg font-semibold text-center mb-2 text-gray-900">${this.escapeHtml(this.title)}</h3>
+      <p class="text-center text-gray-500 mb-4 leading-relaxed">${this.escapeHtml(this.message)}</p>
+      <input class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-6" ${inputAttributes} />
+      <div class="flex justify-center gap-3">
+        <button class="${cancelButtonClass}" data-action="cancel">
           ${this.escapeHtml(this.options.cancelText)}
         </button>
-        <button class="popup-btn ${this.options.confirmClass}" onclick="this.closest('.popup-overlay').dispatchEvent(new CustomEvent('input-ok'))">
+        <button class="${confirmButtonClass}" data-action="confirm">
           ${this.escapeHtml(this.options.confirmText)}
         </button>
       </div>
     `;
+
+    // Use PopupSystem's createOverlay for consistent centering
+    const overlay = window.popupSystem ?
+      window.popupSystem.createOverlay(dialog.outerHTML) :
+      this.createFallbackOverlay(dialog);
     
-    overlay.appendChild(content);
-    
-    const input = content.querySelector('.input-field');
-    const okButton = content.querySelector('.popup-btn-primary, .popup-btn-success');
+    const input = overlay.querySelector('input');
+    const okButton = overlay.querySelector('button:last-child');
     
     // Focus the input field
     setTimeout(() => {
@@ -91,12 +95,16 @@ class InputDialog {
     });
     
     // Handle button clicks
-    overlay.addEventListener('input-ok', () => {
-      this.handleOk(overlay, input);
-    });
-    
-    overlay.addEventListener('input-cancel', () => {
-      this.close(overlay, null);
+    overlay.addEventListener('click', (e) => {
+      const button = e.target.closest('button[data-action]');
+      if (button) {
+        const action = button.getAttribute('data-action');
+        if (action === 'confirm') {
+          this.handleOk(overlay, input);
+        } else if (action === 'cancel') {
+          this.close(overlay, null);
+        }
+      }
     });
     
     // Handle escape key (defaults to cancel)
@@ -156,28 +164,29 @@ class InputDialog {
     if (existingError) {
       existingError.remove();
     }
-    
+
     // Add error message
     const error = document.createElement('div');
-    error.className = 'input-error';
-    error.style.cssText = 'color: #dc2626; font-size: 0.875rem; margin-top: -1rem; margin-bottom: 1rem;';
+    error.className = 'input-error text-red-600 text-sm mt-1 mb-4';
     error.textContent = message;
-    
+
     input.parentNode.insertBefore(error, input.nextSibling);
-    
-    // Add error styling to input
-    input.style.borderColor = '#dc2626';
+
+    // Add error styling to input using Tailwind classes
+    input.className = input.className.replace('border-gray-300', 'border-red-500');
+    input.className = input.className.replace('focus:ring-blue-500', 'focus:ring-red-500');
     input.focus();
-    
+
     // Remove error styling on input
     const removeError = () => {
-      input.style.borderColor = '';
+      input.className = input.className.replace('border-red-500', 'border-gray-300');
+      input.className = input.className.replace('focus:ring-red-500', 'focus:ring-blue-500');
       if (error.parentNode) {
         error.remove();
       }
       input.removeEventListener('input', removeError);
     };
-    
+
     input.addEventListener('input', removeError);
   }
 
@@ -197,6 +206,27 @@ class InputDialog {
         }
       }, 300);
     }
+  }
+
+  getButtonClasses() {
+    const baseButtonClass = 'px-4 py-2 rounded-md font-medium text-sm transition-colors';
+
+    const confirmButtonClass = `${baseButtonClass} bg-blue-500 text-white hover:bg-blue-600`;
+    const cancelButtonClass = `${baseButtonClass} bg-gray-200 text-gray-700 hover:bg-gray-300`;
+
+    return { confirmButtonClass, cancelButtonClass };
+  }
+
+  createFallbackOverlay(dialog) {
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] opacity-0 transition-opacity duration-300';
+
+    const popupContent = document.createElement('div');
+    popupContent.className = 'bg-white rounded-lg shadow-xl max-w-[90vw] max-h-[90vh] overflow-auto transform scale-95 transition-transform duration-300';
+    popupContent.appendChild(dialog);
+
+    overlay.appendChild(popupContent);
+    return overlay;
   }
 
   escapeHtml(text) {

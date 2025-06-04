@@ -53,28 +53,40 @@ function render_auth_component(): void
     const form = document.getElementById('login-form');
     const formData = new FormData(form);
 
-    const data = {
-      action: 'login',
-      email: formData.get('email'),
-      password: formData.get('password')
-    };
+    const email = formData.get('email');
+    const password = formData.get('password');
+
+    if (!email || !password) {
+      if (window.popupSystem) {
+        popupSystem.error('Please enter both email and password');
+      } else {
+        alert('Please enter both email and password');
+      }
+      return;
+    }
 
     try {
-      const response = await fetch('/', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: new URLSearchParams(data)
-      });
+      const result = await authManager.login(email, password);
 
-      if (response.redirected || response.ok) {
+      if (result.success) {
         // Login successful - reload the page
-        window.location.reload();
+        if (window.popupSystem) {
+          popupSystem.success('Login successful!');
+        }
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
         // Login failed
+        let errorMessage = result.error || 'Login failed';
+        if (result.remaining_attempts !== undefined) {
+          errorMessage += ' (' + result.remaining_attempts + ' attempts remaining)';
+        }
+
         if (window.popupSystem) {
-          popupSystem.error('Invalid email or password');
+          popupSystem.error(errorMessage);
         } else {
-          alert('Invalid email or password');
+          alert(errorMessage);
         }
       }
     } catch (error) {

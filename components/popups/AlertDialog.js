@@ -9,6 +9,7 @@ class AlertDialog {
     this.title = title;
     this.type = type; // info, success, warning, error
     this.callback = callback;
+    this.buttonText = 'OK'; // Add missing buttonText property
   }
 
   getIcon() {
@@ -42,54 +43,74 @@ class AlertDialog {
     
     dialog.innerHTML = `
       <div class="${iconClass}">
-        ${this.getIconSvg()}
+        ${this.getIcon()}
       </div>
       <h3 class="text-lg font-semibold text-center mb-2 text-gray-900">${this.escapeHtml(this.title)}</h3>
       <p class="text-center text-gray-500 mb-6 leading-relaxed">${this.escapeHtml(this.message)}</p>
       <div class="flex justify-center">
-        <button class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors font-medium text-sm">
+        <button class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors font-medium text-sm" data-action="ok">
           ${this.escapeHtml(this.buttonText)}
         </button>
       </div>
     `;
     
+    // Use PopupSystem's createOverlay for consistent centering
+    const overlay = window.popupSystem ?
+      window.popupSystem.createOverlay(dialog.outerHTML) :
+      this.createFallbackOverlay(dialog);
+
     // Handle OK button click
-    dialog.querySelector('button').addEventListener('click', () => {
-      this.close(dialog);
+    overlay.addEventListener('click', (e) => {
+      const button = e.target.closest('button[data-action="ok"]');
+      if (button) {
+        this.close(overlay);
+      }
     });
-    
+
     // Handle escape key
     const handleKeydown = (e) => {
       if (e.key === 'Escape') {
-        this.close(dialog);
+        this.close(overlay);
         document.removeEventListener('keydown', handleKeydown);
       }
     };
     document.addEventListener('keydown', handleKeydown);
-    
+
     // Close on overlay click
-    dialog.addEventListener('click', (e) => {
-      if (e.target === dialog) {
-        this.close(dialog);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        this.close(overlay);
       }
     });
-    
-    return dialog;
+
+    return overlay;
   }
 
-  close(dialog) {
+  createFallbackOverlay(dialog) {
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] opacity-0 transition-opacity duration-300';
+
+    const popupContent = document.createElement('div');
+    popupContent.className = 'bg-white rounded-lg shadow-xl max-w-[90vw] max-h-[90vh] overflow-auto transform scale-95 transition-transform duration-300';
+    popupContent.appendChild(dialog);
+
+    overlay.appendChild(popupContent);
+    return overlay;
+  }
+
+  close(overlay) {
     if (this.callback) {
       this.callback(true);
     }
-    
+
     if (window.popupSystem) {
-      window.popupSystem.closePopup(dialog);
+      window.popupSystem.closePopup(overlay);
     } else {
       // Fallback if popup system not available
-      dialog.classList.remove('show');
+      overlay.classList.remove('show');
       setTimeout(() => {
-        if (dialog.parentNode) {
-          dialog.parentNode.removeChild(dialog);
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
         }
       }, 300);
     }

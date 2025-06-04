@@ -8,19 +8,11 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../lib/db.php';
+require_once __DIR__ . '/../lib/permissions.php';
 
-// Check if user has permission to manage rooms
-try {
-  $stmt = $pdo->prepare("SELECT can_manage_rooms FROM permissions WHERE user_id = ?");
-  $stmt->execute([$_SESSION['user_id']]);
-  $canManage = $stmt->fetchColumn();
-
-  if (!$canManage) {
-    echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to edit room types.</p></div>';
-    return;
-  }
-} catch (Exception $e) {
-  echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Unable to verify permissions.</p></div>';
+// Check if user has permission to edit rooms (room types are part of room management)
+if (!canEditRooms($_SESSION['user_id'])) {
+  echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to edit room types.</p></div>';
   return;
 }
 

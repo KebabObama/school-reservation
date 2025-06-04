@@ -8,19 +8,11 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../lib/db.php';
+require_once __DIR__ . '/../lib/permissions.php';
 
-// Check if user has permission to manage purposes (assuming admin-level permission)
-try {
-  $stmt = $pdo->prepare("SELECT can_manage_users FROM permissions WHERE user_id = ?");
-  $stmt->execute([$_SESSION['user_id']]);
-  $canManage = $stmt->fetchColumn();
-
-  if (!$canManage) {
-    echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to create reservation purposes.</p></div>';
-    return;
-  }
-} catch (Exception $e) {
-  echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Unable to verify permissions.</p></div>';
+// Check if user has permission to manage purposes (requires user management permission)
+if (!canEditUsers($_SESSION['user_id'])) {
+  echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to create reservation purposes.</p></div>';
   return;
 }
 ?>

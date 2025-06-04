@@ -27,7 +27,7 @@ class PopupSystem {
     if (!this.notificationContainer) {
       this.notificationContainer = document.createElement('div');
       this.notificationContainer.id = 'notification-container';
-      this.notificationContainer.className = 'fixed z-[9999] w-80 fixed right-0 p-1 flex flex-col-reverse gap-2 pointer-events-none items-end';
+      this.notificationContainer.className = 'fixed bottom-4 right-4 w-80 z-[9999] flex flex-col-reverse gap-2 pointer-events-none items-end';
       document.body.appendChild(this.notificationContainer);
     }
 
@@ -64,22 +64,36 @@ class PopupSystem {
   showPopup(overlay) {
     this.popupContainer.appendChild(overlay);
     this.activePopups.add(overlay);
-    
-    // Trigger animation
+
+    // Trigger animation using Tailwind classes
     requestAnimationFrame(() => {
-      overlay.classList.add('show');
+      overlay.classList.remove('opacity-0');
+      overlay.classList.add('opacity-100');
+      const content = overlay.querySelector('div');
+      if (content) {
+        content.classList.remove('scale-95');
+        content.classList.add('scale-100');
+      }
     });
-    
+
     return overlay;
   }
 
   // Close specific popup
   closePopup(overlay) {
     if (!overlay || !this.activePopups.has(overlay)) return;
-    
-    overlay.classList.remove('show');
+
+    // Animate out using Tailwind classes
+    overlay.classList.remove('opacity-100');
+    overlay.classList.add('opacity-0');
+    const content = overlay.querySelector('div');
+    if (content) {
+      content.classList.remove('scale-100');
+      content.classList.add('scale-95');
+    }
+
     this.activePopups.delete(overlay);
-    
+
     setTimeout(() => {
       if (overlay.parentNode) {
         overlay.parentNode.removeChild(overlay);

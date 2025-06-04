@@ -8,19 +8,11 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../lib/db.php';
+require_once __DIR__ . '/../lib/permissions.php';
 
-// Check if user has permission to manage rooms
-try {
-  $stmt = $pdo->prepare("SELECT can_manage_rooms FROM permissions WHERE user_id = ?");
-  $stmt->execute([$_SESSION['user_id']]);
-  $canManage = $stmt->fetchColumn();
-  
-  if (!$canManage) {
-    echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to create room types.</p></div>';
-    return;
-  }
-} catch (Exception $e) {
-  echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Unable to verify permissions.</p></div>';
+// Check if user has permission to create rooms (room types are part of room management)
+if (!canCreateRooms($_SESSION['user_id'])) {
+  echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to create room types.</p></div>';
   return;
 }
 ?>
@@ -55,10 +47,10 @@ try {
   <div>
     <label class="block mb-2 font-medium text-gray-700">Quick Color Selection</label>
     <div class="grid grid-cols-6 gap-2">
-      <?php 
+      <?php
       $predefinedColors = [
         '#3B82F6' => 'Blue',
-        '#10B981' => 'Green', 
+        '#10B981' => 'Green',
         '#F59E0B' => 'Orange',
         '#8B5CF6' => 'Purple',
         '#EF4444' => 'Red',
@@ -70,9 +62,9 @@ try {
         '#06B6D4' => 'Cyan',
         '#A855F7' => 'Violet'
       ];
-      
+
       foreach ($predefinedColors as $colorCode => $colorName): ?>
-        <button type="button" 
+        <button type="button"
           onclick="document.getElementById('color').value = '<?php echo $colorCode; ?>'"
           class="w-8 h-8 rounded-md border-2 border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           style="background-color: <?php echo $colorCode; ?>"
@@ -156,13 +148,13 @@ try {
           
           const result = await response.json();
           if (response.ok && result.room_type_id) {
-            alert('Room type created successfully!');
+            popupSystem.success('Room type created successfully!');
             loadPage('RoomTypes');
           } else {
-            alert('Error: ' + (result.error || 'Unknown error'));
+            popupSystem.error(result.error || 'Unknown error occurred');
           }
         } catch (error) {
-          alert('Network error: ' + error.message);
+          popupSystem.error('Network error: ' + error.message);
         }
       })()"
       class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Create Room Type</button>
@@ -170,34 +162,34 @@ try {
 </form>
 
 <script>
-// Add real-time validation
-document.getElementById('name').addEventListener('input', function() {
-  const value = this.value.trim();
-  const button = document.querySelector('button[onclick*="create.php"]');
-  
-  if (value.length < 2) {
-    this.classList.add('border-red-300');
-    button.disabled = true;
-    button.classList.add('opacity-50', 'cursor-not-allowed');
-  } else {
-    this.classList.remove('border-red-300');
-    button.disabled = false;
-    button.classList.remove('opacity-50', 'cursor-not-allowed');
-  }
-});
+  // Add real-time validation
+  document.getElementById('name').addEventListener('input', function() {
+    const value = this.value.trim();
+    const button = document.querySelector('button[onclick*="create.php"]');
 
-document.getElementById('description').addEventListener('input', function() {
-  const value = this.value.trim();
-  if (value.length < 10) {
-    this.classList.add('border-red-300');
-  } else {
-    this.classList.remove('border-red-300');
-  }
-});
+    if (value.length < 2) {
+      this.classList.add('border-red-300');
+      button.disabled = true;
+      button.classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+      this.classList.remove('border-red-300');
+      button.disabled = false;
+      button.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+  });
 
-// Color preview update
-document.getElementById('color').addEventListener('change', function() {
-  const colorValue = this.value;
-  // You could add a preview here if needed
-});
+  document.getElementById('description').addEventListener('input', function() {
+    const value = this.value.trim();
+    if (value.length < 10) {
+      this.classList.add('border-red-300');
+    } else {
+      this.classList.remove('border-red-300');
+    }
+  });
+
+  // Color preview update
+  document.getElementById('color').addEventListener('change', function() {
+    const colorValue = this.value;
+    // You could add a preview here if needed
+  });
 </script>

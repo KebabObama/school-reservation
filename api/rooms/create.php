@@ -3,16 +3,10 @@
 
 header('Content-Type: application/json');
 
-if (session_status() === PHP_SESSION_NONE) {
-  session_start();
-}
+require_once __DIR__ . '/../../lib/token_middleware.php';
 
-// Check user authentication
-if (!isset($_SESSION['user_id'])) {
-  http_response_code(401);
-  echo json_encode(['error' => 'Unauthorized']);
-  exit;
-}
+// Authenticate using token or session
+$userData = requireAuth();
 
 // Only accept POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -22,6 +16,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 require_once __DIR__ . '/../../lib/db.php';
+require_once __DIR__ . '/../../lib/permissions.php';
+
+// Check if user has permission to create rooms
+if (!canCreateRooms($userData['user_id'])) {
+  http_response_code(403);
+  echo json_encode(['error' => 'You do not have permission to create rooms']);
+  exit;
+}
 
 $errors = [];
 
@@ -34,14 +36,31 @@ if ($input === null) {
 // Sanitize and validate input
 $name = trim($input['name'] ?? '');
 $room_type_id = !empty($input['room_type_id']) ? (int)$input['room_type_id'] : null;
+$floor_id = !empty($input['floor_id']) ? (int)$input['floor_id'] : null;
 $capacity = !empty($input['capacity']) ? (int)$input['capacity'] : null;
-$location = trim($input['location'] ?? '');
-$floor = trim($input['floor'] ?? '');
-$building = trim($input['building'] ?? '');
 $description = trim($input['description'] ?? '');
 $equipment = trim($input['equipment'] ?? '');
 $image_url = trim($input['image_url'] ?? '');
 $features = $input['features'] ?? [];
+// Ensure features is an array, even if empty
+if (!is_array($features)) {
+  $features = [];
+}
+
+// Get building_id from floor_id
+$building_id = null;
+if ($floor_id) {
+  try {
+    $stmt = $pdo->prepare("SELECT building_id FROM floors WHERE id = ?");
+    $stmt->execute([$floor_id]);
+    $floor = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($floor) {
+      $building_id = (int)$floor['building_id'];
+    }
+  } catch (Exception $e) {
+    // Will be handled by validation below
+  }
+}
 
 if (empty($name)) {
   $errors[] = 'Room name is required.';
@@ -51,32 +70,16 @@ if (empty($room_type_id)) {
   $errors[] = 'Room type is required.';
 }
 
-if (empty($description)) {
-  $errors[] = 'Description is required.';
+if (empty($floor_id)) {
+  $errors[] = 'Floor is required.';
+}
+
+if ($floor_id && empty($building_id)) {
+  $errors[] = 'Invalid floor selected - no associated building found.';
 }
 
 if (empty($capacity) || $capacity <= 0) {
   $errors[] = 'Capacity is required and must be a positive number.';
-}
-
-if (empty($floor)) {
-  $errors[] = 'Floor is required.';
-}
-
-if (empty($building)) {
-  $errors[] = 'Building is required.';
-}
-
-if (empty($location)) {
-  $errors[] = 'Location is required.';
-}
-
-if (empty($equipment)) {
-  $errors[] = 'Equipment information is required.';
-}
-
-if (empty($features) || !is_array($features)) {
-  $errors[] = 'At least one room feature must be selected.';
 }
 
 // Validate room type if provided
@@ -114,17 +117,16 @@ if (!empty($errors)) {
 // Insert room
 try {
   $stmt = $pdo->prepare("
-        INSERT INTO rooms (name, room_type_id, capacity, location, floor, building, description, equipment, image_url, features, is_active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+        INSERT INTO rooms (name, room_type_id, building_id, floor_id, capacity, description, equipment, image_url, features, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
     ");
 
   $stmt->execute([
     $name,
     $room_type_id,
+    $building_id,
+    $floor_id,
     $capacity,
-    $location,
-    $floor,
-    $building,
     $description,
     $equipment,
     $image_url ?: null,

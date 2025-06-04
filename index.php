@@ -35,7 +35,7 @@ function is_logged_in(): bool
   <meta charset="UTF-8" />
   <title>Room Manager</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="/components/popups/popups.css">
+  <script src="/lib/js/auth-manager.js"></script>
 </head>
 
 <body class="bg-gray-100 h-screen flex">
@@ -52,20 +52,24 @@ function is_logged_in(): bool
     </main>
 
     <script>
-      async function loadPage(pageName) {
+      async function loadPage(pageName, params = {}) {
         const mainContent = document.getElementById('main-content');
         mainContent.innerHTML =
           '<div class="flex items-center justify-center h-64"><div class="text-lg">Loading...</div></div>';
 
         try {
-          const response = await fetch('/api/navigation/load-page.php', {
+          const requestData = {
+            page: pageName,
+            ...params
+          };
+
+          // Use auth manager for authenticated requests
+          const response = await authManager.apiRequest('/api/navigation/load-page.php', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-              page: pageName
-            }),
+            body: JSON.stringify(requestData),
             credentials: 'same-origin'
           });
 
@@ -94,23 +98,13 @@ function is_logged_in(): bool
 
       async function logout() {
         try {
-          const response = await fetch('/api/auth/logout.php', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            credentials: 'same-origin'
-          });
-
-          if (response.ok) {
-            // Redirect to home page after successful logout
-            window.location.href = '/';
-          } else {
-            const result = await response.json();
-            alert('Logout failed: ' + (result.error || 'Unknown error'));
-          }
+          // Use the auth manager for enhanced logout
+          await authManager.logout();
         } catch (error) {
-          alert('Network error during logout: ' + error.message);
+          console.error('Logout error:', error);
+          // Fallback: clear tokens and reload
+          authManager.clearTokens();
+          window.location.reload();
         }
       }
       document.addEventListener('DOMContentLoaded', function() {
@@ -125,7 +119,11 @@ function is_logged_in(): bool
 
   <!-- Popup System Container -->
   <div id="popup-container"></div>
-  <div id="notification-container" class="w-80 fixed right-0 p-1 flex flex-col-reverse"></div>
+  <div id="notification-container"
+    class="fixed bottom-4 right-4 w-80 z-[9999] flex flex-col-reverse gap-2 pointer-events-none items-end"></div>
+
+  <!-- Popup System Styles -->
+  <link rel="stylesheet" href="/components/popups/popup-styles.css">
 
   <!-- Popup System Scripts -->
   <script src="/components/popups/PopupSystem.js"></script>

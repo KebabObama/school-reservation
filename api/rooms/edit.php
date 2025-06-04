@@ -39,11 +39,9 @@ try {
   $fields = [
     'name',
     'room_type_id',
+    'floor_id',
     'capacity',
     'equipment',
-    'location',
-    'floor',
-    'building',
     'description',
     'image_url',
     'is_active',
@@ -53,6 +51,21 @@ try {
 
   $updates = [];
   $params = [];
+
+  // Handle building_id derivation from floor_id
+  if (array_key_exists('floor_id', $data) && $data['floor_id']) {
+    try {
+      $stmt = $pdo->prepare("SELECT building_id FROM floors WHERE id = ?");
+      $stmt->execute([$data['floor_id']]);
+      $floor = $stmt->fetch(PDO::FETCH_ASSOC);
+      if ($floor) {
+        $data['building_id'] = (int)$floor['building_id'];
+        $fields[] = 'building_id';
+      }
+    } catch (Exception $e) {
+      throw new Exception('Invalid floor selected');
+    }
+  }
 
   foreach ($fields as $field) {
     if (array_key_exists($field, $data)) {

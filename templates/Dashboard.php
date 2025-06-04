@@ -16,7 +16,6 @@ require_once __DIR__ . '/../lib/permissions.php';
 $user_id = $_SESSION['user_id'];
 $canViewRooms = canViewRooms($user_id);
 $canViewReservations = canViewReservations($user_id);
-$canViewUsers = canViewUsers($user_id);
 
 // Get dashboard statistics
 try {
@@ -128,7 +127,7 @@ $user_surname = htmlspecialchars($_SESSION['user_surname'] ?? '');
 
   <!-- Quick Actions -->
   <?php
-  $hasQuickActions = $canViewRooms || $canViewReservations || $canViewUsers;
+  $hasQuickActions = $canViewRooms || $canViewReservations;
   if ($hasQuickActions): ?>
     <div class="bg-white rounded-lg shadow p-6">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
@@ -157,17 +156,7 @@ $user_surname = htmlspecialchars($_SESSION['user_surname'] ?? '');
           </button>
         <?php endif; ?>
 
-        <?php if ($canViewUsers): ?>
-          <button onclick="loadPage('UserPage')" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-            <svg class="w-8 h-8 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-            </svg>
-            <div class="text-left">
-              <p class="font-medium text-gray-900">Manage Users</p>
-              <p class="text-sm text-gray-600">View and manage user accounts</p>
-            </div>
-          </button>
-        <?php endif; ?>
+
       </div>
     </div>
   <?php endif; ?>

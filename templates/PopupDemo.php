@@ -14,25 +14,25 @@
   <div class="bg-white rounded-lg shadow p-6">
     <h2 class="text-xl font-semibold text-gray-900 mb-4">Notification Cards</h2>
     <p class="text-gray-600 mb-4">Small cards that appear in the bottom-right corner for informational messages.</p>
-    
+
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <button onclick="popupSystem.success('Operation completed successfully!')" 
-              class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+      <button onclick="popupSystem.success('Operation completed successfully!')"
+        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
         Success Notification
       </button>
-      
-      <button onclick="popupSystem.error('Something went wrong!')" 
-              class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+
+      <button onclick="popupSystem.error('Something went wrong!')"
+        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
         Error Notification
       </button>
-      
-      <button onclick="popupSystem.warning('Please review your settings')" 
-              class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700">
+
+      <button onclick="popupSystem.warning('Please review your settings')"
+        class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700">
         Warning Notification
       </button>
-      
-      <button onclick="popupSystem.info('New feature available!')" 
-              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+
+      <button onclick="popupSystem.info('New feature available!')"
+        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
         Info Notification
       </button>
     </div>
@@ -42,25 +42,25 @@
   <div class="bg-white rounded-lg shadow p-6">
     <h2 class="text-xl font-semibold text-gray-900 mb-4">Alert Dialogs</h2>
     <p class="text-gray-600 mb-4">Full-featured popups for displaying important messages.</p>
-    
+
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <button onclick="popupSystem.alert('This is an informational alert', 'Information', 'info')" 
-              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+      <button onclick="popupSystem.alert('This is an informational alert', 'Information', 'info')"
+        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
         Info Alert
       </button>
-      
-      <button onclick="popupSystem.alert('Operation completed successfully!', 'Success', 'success')" 
-              class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+
+      <button onclick="popupSystem.alert('Operation completed successfully!', 'Success', 'success')"
+        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
         Success Alert
       </button>
-      
-      <button onclick="popupSystem.alert('Please check your input', 'Warning', 'warning')" 
-              class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700">
+
+      <button onclick="popupSystem.alert('Please check your input', 'Warning', 'warning')"
+        class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700">
         Warning Alert
       </button>
-      
-      <button onclick="popupSystem.alert('An error occurred', 'Error', 'error')" 
-              class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+
+      <button onclick="popupSystem.alert('An error occurred', 'Error', 'error')"
+        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
         Error Alert
       </button>
     </div>
@@ -70,16 +70,16 @@
   <div class="bg-white rounded-lg shadow p-6">
     <h2 class="text-xl font-semibold text-gray-900 mb-4">Confirm Dialogs</h2>
     <p class="text-gray-600 mb-4">User confirmation dialogs with customizable buttons.</p>
-    
+
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <button onclick="(async () => {
         const result = await popupSystem.confirm('Do you want to proceed?');
         popupSystem.info('You chose: ' + (result ? 'Yes' : 'No'));
-      })()" 
-              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+      })()"
+        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
         Basic Confirm
       </button>
-      
+
       <button onclick="(async () => {
         const result = await popupSystem.confirm('This action cannot be undone!', 'Delete Item', {
           confirmText: 'Delete',
@@ -87,11 +87,11 @@
           type: 'danger'
         });
         popupSystem.info('Delete action: ' + (result ? 'Confirmed' : 'Cancelled'));
-      })()" 
-              class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+      })()"
+        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
         Danger Confirm
       </button>
-      
+
       <button onclick="(async () => {
         const result = await popupSystem.confirm('Save changes before closing?', 'Unsaved Changes', {
           confirmText: 'Save',
@@ -99,9 +99,37 @@
           type: 'warning'
         });
         popupSystem.info('Save action: ' + (result ? 'Saved' : 'Discarded'));
-      })()" 
-              class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700">
+      })()"
+        class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700">
         Warning Confirm
+      </button>
+    </div>
+  </div>
+
+  <!-- Alert Dialogs Section -->
+  <div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-xl font-semibold text-gray-900 mb-4">Alert Dialogs</h2>
+    <p class="text-gray-600 mb-4">Display important messages to users.</p>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <button onclick="popupSystem.alert('This is an informational message!', 'Information', 'info')"
+        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+        Info Alert
+      </button>
+
+      <button onclick="popupSystem.alert('Operation completed successfully!', 'Success', 'success')"
+        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+        Success Alert
+      </button>
+
+      <button onclick="popupSystem.alert('Please check your input!', 'Warning', 'warning')"
+        class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700">
+        Warning Alert
+      </button>
+
+      <button onclick="popupSystem.alert('An error occurred!', 'Error', 'error')"
+        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+        Error Alert
       </button>
     </div>
   </div>
@@ -110,18 +138,18 @@
   <div class="bg-white rounded-lg shadow p-6">
     <h2 class="text-xl font-semibold text-gray-900 mb-4">Input Dialogs</h2>
     <p class="text-gray-600 mb-4">Collect user input with validation.</p>
-    
+
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <button onclick="(async () => {
         const result = await popupSystem.prompt('Enter your name:');
         if (result !== null) {
           popupSystem.success('Hello, ' + result + '!');
         }
-      })()" 
-              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+      })()"
+        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
         Basic Input
       </button>
-      
+
       <button onclick="(async () => {
         const result = await popupSystem.prompt('Enter your email:', 'Email Required', '', {
           inputType: 'email',
@@ -137,11 +165,11 @@
         if (result !== null) {
           popupSystem.success('Email saved: ' + result);
         }
-      })()" 
-              class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+      })()"
+        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
         Email Input
       </button>
-      
+
       <button onclick="(async () => {
         const result = await popupSystem.prompt('Enter a password:', 'Password Required', '', {
           inputType: 'password',
@@ -160,8 +188,8 @@
         if (result !== null) {
           popupSystem.success('Password set successfully!');
         }
-      })()" 
-              class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+      })()"
+        class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
         Password Input
       </button>
     </div>
@@ -171,46 +199,79 @@
   <div class="bg-white rounded-lg shadow p-6">
     <h2 class="text-xl font-semibold text-gray-900 mb-4">Legacy Functions</h2>
     <p class="text-gray-600 mb-4">Test backward compatibility with native JavaScript functions.</p>
-    
+
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <button onclick="alert('This is a legacy alert!')" 
-              class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+      <button onclick="alert('This is a legacy alert!')"
+        class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
         Legacy alert()
       </button>
-      
+
       <button onclick="(async () => {
         const result = await confirm('Do you confirm this action?');
         alert('You chose: ' + (result ? 'OK' : 'Cancel'));
-      })()" 
-              class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+      })()"
+        class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
         Legacy confirm()
       </button>
-      
+
       <button onclick="(async () => {
         const result = await prompt('Enter something:');
         if (result !== null) {
           alert('You entered: ' + result);
         }
-      })()" 
-              class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+      })()"
+        class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
         Legacy prompt()
       </button>
     </div>
   </div>
 
-  <!-- Clear Notifications -->
+  <!-- Comprehensive Test Section -->
+  <div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-xl font-semibold text-gray-900 mb-4">Comprehensive Test</h2>
+    <p class="text-gray-600 mb-4">Test all popup types in sequence to verify functionality.</p>
+
+    <div class="flex gap-4 mb-4">
+      <button onclick="(async () => {
+        // Test Alert
+        await popupSystem.alert('This is a test alert!', 'Test Alert', 'info');
+
+        // Test Confirm
+        const confirmed = await popupSystem.confirm('Do you want to continue with the test?', 'Test Confirm');
+        if (!confirmed) {
+          popupSystem.info('Test cancelled');
+          return;
+        }
+
+        // Test Input
+        const name = await popupSystem.prompt('Enter your name for the test:', 'Test Input');
+        if (name === null) {
+          popupSystem.info('Input test cancelled');
+          return;
+        }
+
+        // Test Notifications
+        popupSystem.success('All tests completed successfully! Hello ' + (name || 'Anonymous') + '!');
+      })()"
+        class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+        Run Full Test
+      </button>
+    </div>
+  </div>
+
+  <!-- Utility Functions -->
   <div class="bg-white rounded-lg shadow p-6">
     <h2 class="text-xl font-semibold text-gray-900 mb-4">Utility Functions</h2>
     <div class="flex gap-4">
-      <button onclick="popupSystem.clearNotifications()" 
-              class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+      <button onclick="popupSystem.clearNotifications()"
+        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
         Clear All Notifications
       </button>
-      
-      <button onclick="for(let i = 0; i < 5; i++) { 
+
+      <button onclick="for(let i = 0; i < 5; i++) {
         setTimeout(() => popupSystem.info('Notification ' + (i + 1)), i * 200);
-      }" 
-              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+      }"
+        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
         Test Multiple Notifications
       </button>
     </div>
