@@ -54,6 +54,8 @@ $allowed_pages = [
   'Rooms',
   'CreateRoom',
   'EditRoom',
+  'Calendar',
+  'DayDetail',
   'Reservations',
   'CreateReservation',
   'EditReservation',

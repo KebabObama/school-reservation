@@ -65,7 +65,7 @@ $permissionCategories = getPermissionCategories();
   </div>
   <?php else: ?>
   <div class="bg-white rounded-lg shadow overflow-hidden">
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto cursor-grab active:cursor-grabbing" id="permissions-table-container">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
@@ -85,8 +85,8 @@ $permissionCategories = getPermissionCategories();
             <?php endforeach; ?>
           </tr>
           <tr class="bg-gray-100">
-            <th class="px-6 py-2"></th>
-            <th class="px-6 py-2"></th>
+            <th class="px-6 py-2 bg-white tracking-wider"></th>
+            <th class="px-6 py-2 bg-white tracking-wider  "></th>
             <?php foreach ($permissionCategories as $categoryName => $permissions): ?>
             <?php foreach ($permissions as $permKey => $permLabel): ?>
             <th class="px-2 py-2 text-center text-xs font-medium text-gray-600 uppercase tracking-wider min-w-[80px]">
@@ -259,4 +259,68 @@ function updatePermissionButton(button, hasPermission) {
       `;
   }
 }
+
+// Drag to scroll functionality for the permissions table
+(function() {
+  const container = document.getElementById('permissions-table-container');
+  if (!container) return;
+
+  let isDown = false;
+  let startX;
+  let scrollLeft;
+
+  container.addEventListener('mousedown', (e) => {
+    // Don't start dragging if clicking on a button or interactive element
+    if (e.target.closest('.permission-toggle') || e.target.closest('button')) {
+      return;
+    }
+
+    isDown = true;
+    container.classList.add('active:cursor-grabbing');
+    startX = e.pageX - container.offsetLeft;
+    scrollLeft = container.scrollLeft;
+    e.preventDefault(); // Prevent text selection
+  });
+
+  container.addEventListener('mouseleave', () => {
+    isDown = false;
+    container.classList.remove('active:cursor-grabbing');
+  });
+
+  container.addEventListener('mouseup', () => {
+    isDown = false;
+    container.classList.remove('active:cursor-grabbing');
+  });
+
+  container.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - container.offsetLeft;
+    const walk = (x - startX) * 2; // Scroll speed multiplier
+    container.scrollLeft = scrollLeft - walk;
+  });
+
+  // Touch support for mobile devices
+  container.addEventListener('touchstart', (e) => {
+    if (e.target.closest('.permission-toggle') || e.target.closest('button')) {
+      return;
+    }
+
+    isDown = true;
+    startX = e.touches[0].pageX - container.offsetLeft;
+    scrollLeft = container.scrollLeft;
+  });
+
+  container.addEventListener('touchend', () => {
+    isDown = false;
+  });
+
+  container.addEventListener('touchmove', (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.touches[0].pageX - container.offsetLeft;
+    const walk = (x - startX) * 2;
+    container.scrollLeft = scrollLeft - walk;
+  });
+})();
 </script>
