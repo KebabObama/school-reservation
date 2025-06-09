@@ -11,13 +11,11 @@ if (!isset($_SESSION['user_id'])) {
 require_once __DIR__ . '/../lib/db.php';
 require_once __DIR__ . '/../lib/permissions.php';
 
-// Check if user has permission to edit users
 if (!canEditUsers($_SESSION['user_id'])) {
   echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to manage user permissions.</p></div>';
   return;
 }
 
-// Get users with their permissions
 try {
   $allPermissions = getAllPermissionNames();
   $permissionColumns = implode(', p.', $allPermissions);
@@ -33,7 +31,6 @@ try {
   $usersWithPermissions = [];
 }
 
-// Get all permissions with their labels
 $permissionCategories = getPermissionCategories();
 $permissions = [];
 foreach ($permissionCategories as $category) {
@@ -42,7 +39,6 @@ foreach ($permissionCategories as $category) {
 ?>
 
 <div class="space-y-6">
-  <!-- Header -->
   <div class="flex justify-between items-center">
     <div>
       <h1 class="text-3xl font-bold text-gray-900">Permission Management</h1>
@@ -57,7 +53,6 @@ foreach ($permissionCategories as $category) {
     </button>
   </div>
 
-  <!-- Users List -->
   <div class="bg-white rounded-lg shadow overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200">
       <h2 class="text-lg font-medium text-gray-900">Users & Permissions</h2>
@@ -96,8 +91,6 @@ foreach ($permissionCategories as $category) {
             </div>
           </div>
         </div>
-
-        <!-- Permission Controls -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <?php foreach ($permissions as $perm => $label): ?>
           <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -124,7 +117,6 @@ foreach ($permissionCategories as $category) {
 
                                                const result = await response.json();
                                                if (response.ok) {
-                                                   // Show success feedback
                                                    const container = checkbox.closest('.p-3');
                                                    container.style.backgroundColor = '#f0f9ff';
                                                    setTimeout(() => {
@@ -132,11 +124,11 @@ foreach ($permissionCategories as $category) {
                                                    }, 1000);
                                                } else {
                                                    popupSystem.error(result.error || 'Unknown error');
-                                                   checkbox.checked = !isChecked; // Revert
+                                                   checkbox.checked = !isChecked; 
                                                }
                                            } catch (error) {
                                                popupSystem.error('Network error: ' + error.message);
-                                               checkbox.checked = !isChecked; // Revert
+                                               checkbox.checked = !isChecked; 
                                            }
                                        })(event)">
                 <div
@@ -147,127 +139,8 @@ foreach ($permissionCategories as $category) {
           </div>
           <?php endforeach; ?>
         </div>
-
-        <!-- Quick Actions -->
-        <div class="mt-4 flex space-x-2">
-          <button onclick="grantAllPermissions(<?php echo $user['id']; ?>)"
-            class="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">
-            Grant All
-          </button>
-
-          <button onclick="revokeAllPermissions(<?php echo $user['id']; ?>)"
-            class="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700">
-            Revoke All
-          </button>
-        </div>
       </div>
       <?php endforeach; ?>
     </div>
   </div>
 </div>
-
-<script>
-// Grant all permissions for a user
-async function grantAllPermissions(userId) {
-  try {
-    const confirmed = await popupSystem.confirm(
-      'Grant all permissions to this user?',
-      'Grant All Permissions', {
-        confirmText: 'Grant All',
-        cancelText: 'Cancel',
-        type: 'info'
-      }
-    );
-
-    if (!confirmed) return;
-
-    const response = await fetch('/api/permissions/update.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        user_id: userId,
-        bulk_action: 'grant_all'
-      }),
-      credentials: 'same-origin'
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-      // Update all permission checkboxes for this user
-      const userSection = document.querySelector(`input[onchange*="userId = ${userId}"]`).closest('.p-6');
-      const permissionCheckboxes = userSection.querySelectorAll('input[type="checkbox"]');
-
-      permissionCheckboxes.forEach(checkbox => {
-        checkbox.checked = true;
-      });
-
-      // Show success feedback
-      userSection.style.backgroundColor = '#f0f9ff';
-      setTimeout(() => {
-        userSection.style.backgroundColor = '';
-      }, 2000);
-
-      popupSystem.success('All permissions granted successfully!');
-    } else {
-      popupSystem.error(result.error || 'Failed to grant permissions');
-    }
-  } catch (error) {
-    popupSystem.error('Network error: ' + error.message);
-  }
-}
-
-// Revoke all permissions for a user
-async function revokeAllPermissions(userId) {
-  try {
-    const confirmed = await popupSystem.confirm(
-      'Revoke all permissions from this user?',
-      'Revoke All Permissions', {
-        confirmText: 'Revoke All',
-        cancelText: 'Cancel',
-        type: 'warning'
-      }
-    );
-
-    if (!confirmed) return;
-
-    const response = await fetch('/api/permissions/update.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        user_id: userId,
-        bulk_action: 'revoke_all'
-      }),
-      credentials: 'same-origin'
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-      // Update all permission checkboxes for this user
-      const userSection = document.querySelector(`input[onchange*="userId = ${userId}"]`).closest('.p-6');
-      const permissionCheckboxes = userSection.querySelectorAll('input[type="checkbox"]');
-
-      permissionCheckboxes.forEach(checkbox => {
-        checkbox.checked = false;
-      });
-
-      // Show success feedback
-      userSection.style.backgroundColor = '#fef2f2';
-      setTimeout(() => {
-        userSection.style.backgroundColor = '';
-      }, 2000);
-
-      popupSystem.success('All permissions revoked successfully!');
-    } else {
-      popupSystem.error(result.error || 'Failed to revoke permissions');
-    }
-  } catch (error) {
-    popupSystem.error('Network error: ' + error.message);
-  }
-}
-</script>

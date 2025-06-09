@@ -11,12 +11,11 @@ if (!isset($_SESSION['user_id'])) {
 require_once __DIR__ . '/../lib/db.php';
 require_once __DIR__ . '/../lib/permissions.php';
 
-// Get rooms with their types, buildings, and floors
 try {
   $rooms = $pdo->query("
         SELECT r.*, rt.name as room_type_name, rt.color as room_type_color,
-               b.name as building_name, f.name as floor_name,
-               COUNT(res.id) as reservation_count
+        b.name as building_name, f.name as floor_name,
+        COUNT(res.id) as reservation_count
         FROM rooms r
         LEFT JOIN room_types rt ON r.room_type_id = rt.id
         LEFT JOIN buildings b ON r.building_id = b.id
@@ -32,29 +31,46 @@ try {
 function renderDeleteRoomButton($roomId, $roomName, $reservationCount)
 {
   $canDelete = canDeleteRooms($_SESSION['user_id']);
-
-  if (!$canDelete) {
+  if (!$canDelete)
     return '';
-  }
-
   $hasReservations = $reservationCount > 0;
   $title = $hasReservations ? 'Delete room and all its reservations' : 'Delete Room';
-
   return "
-    <button onclick=\"deleteRoomAction($roomId, '$roomName', $reservationCount)\"
-            class=\"text-gray-400 hover:text-red-600\"
-            title=\"$title\">
-      <svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
-        <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"
-              d=\"M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16\"></path>
-      </svg>
-    </button>
-  ";
+  <button onclick=\"(async () => { 
+      let message = 'Are you sure you want to delete the room &quot;$roomName&quot;?';
+      if ($reservationCount > 0)
+        message += '\\n\\nThis will also delete:\\n• $reservationCount reservation(s)';
+      const confirmed = await popupSystem.confirm(message, 'This action cannot be undone.');
+      if (!confirmed) return;
+      try {
+        const response = await fetch('/api/rooms/delete.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: $roomId }),
+          credentials: 'same-origin'
+        });
+        const result = await response.json();
+        if (response.ok) {
+          popupSystem.success(result.message || 'Room deleted successfully!');
+          loadPage('Rooms');
+        } else {
+          popupSystem.error(result.error || 'Failed to delete room');
+        }
+      } catch (error) {
+        popupSystem.error('Network error: ' + error.message);
+      }
+  })()\" 
+  class=\"text-gray-400 hover:text-red-600\" title=\"$title\">
+    <svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+      <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"
+            d=\"M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16\"></path>
+    </svg>
+  </button>
+";
 }
 ?>
 
 <div class="space-y-6">
-  <!-- Header -->
   <div class="flex justify-between items-center">
     <div>
       <h1 class="text-3xl font-bold text-gray-900">Rooms</h1>
@@ -70,8 +86,6 @@ function renderDeleteRoomButton($roomId, $roomName, $reservationCount)
       </button>
     <?php endif; ?>
   </div>
-
-  <!-- Filters -->
   <div class="bg-white rounded-lg shadow p-4">
     <div class="flex flex-wrap gap-4">
       <div class="flex-1 min-w-64">
@@ -91,8 +105,6 @@ function renderDeleteRoomButton($roomId, $roomName, $reservationCount)
       </select>
     </div>
   </div>
-
-  <!-- Rooms Grid -->
   <?php if (empty($rooms)): ?>
     <div class="bg-white rounded-lg shadow p-8 text-center">
       <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,7 +136,6 @@ function renderDeleteRoomButton($roomId, $roomName, $reservationCount)
               </svg>
             </div>
           <?php endif; ?>
-
           <div class="p-6">
             <div class="flex items-center justify-between mb-2">
               <h3 class="text-lg font-semibold text-gray-900"><?php echo htmlspecialchars($room['name']); ?></h3>
@@ -141,11 +152,9 @@ function renderDeleteRoomButton($roomId, $roomName, $reservationCount)
                 </span>
               </div>
             </div>
-
             <?php if ($room['description']): ?>
               <p class="text-gray-600 text-sm mb-3 line-clamp-2"><?php echo htmlspecialchars($room['description']); ?></p>
             <?php endif; ?>
-
             <div class="space-y-2 text-sm text-gray-600 mb-4">
               <?php if ($room['capacity']): ?>
                 <div class="flex items-center">
@@ -157,7 +166,6 @@ function renderDeleteRoomButton($roomId, $roomName, $reservationCount)
                   Capacity: <?php echo $room['capacity']; ?> people
                 </div>
               <?php endif; ?>
-
               <?php if ($room['building_name']): ?>
                 <div class="flex items-center">
                   <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,7 +176,6 @@ function renderDeleteRoomButton($roomId, $roomName, $reservationCount)
                   Building: <?php echo htmlspecialchars($room['building_name']); ?>
                 </div>
               <?php endif; ?>
-
               <?php if ($room['floor_name']): ?>
                 <div class="flex items-center">
                   <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,7 +185,6 @@ function renderDeleteRoomButton($roomId, $roomName, $reservationCount)
                   Floor: <?php echo htmlspecialchars($room['floor_name']); ?>
                 </div>
               <?php endif; ?>
-
               <div class="flex items-center">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -188,7 +194,6 @@ function renderDeleteRoomButton($roomId, $roomName, $reservationCount)
                 reservation<?php echo $room['reservation_count'] !== 1 ? 's' : ''; ?>
               </div>
             </div>
-
             <div class="flex justify-between items-center">
               <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                 View Details
@@ -213,42 +218,3 @@ function renderDeleteRoomButton($roomId, $roomName, $reservationCount)
     </div>
   <?php endif; ?>
 </div>
-
-<script>
-  async function deleteRoomAction(roomId, roomName, reservationCount) {
-    let message = `Are you sure you want to delete the room "${roomName}"?`;
-    if (reservationCount > 0) {
-      message += `\n\nThis will also delete:\n• ${reservationCount} reservation(s)`;
-    }
-
-    const confirmed = await popupSystem.confirm(
-      message,
-      'This action cannot be undone.'
-    );
-
-    if (!confirmed) return;
-
-    try {
-      const response = await fetch('/api/rooms/delete.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          id: roomId
-        }),
-        credentials: 'same-origin'
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-        popupSystem.success(result.message || 'Room deleted successfully!');
-        loadPage('Rooms');
-      } else {
-        popupSystem.error(result.error || 'Failed to delete room');
-      }
-    } catch (error) {
-      popupSystem.error('Network error: ' + error.message);
-    }
-  }
-</script>

@@ -9,8 +9,6 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../lib/db.php';
-
-// Get reservation purposes
 try {
   $purposes = $pdo->query("
         SELECT rp.*, COUNT(r.id) as usage_count 
@@ -25,7 +23,6 @@ try {
 ?>
 
 <div class="space-y-6">
-  <!-- Header -->
   <div class="flex justify-between items-center">
     <div>
       <h1 class="text-3xl font-bold text-gray-900">Reservation Purposes</h1>
@@ -39,8 +36,6 @@ try {
       Add Purpose
     </button>
   </div>
-
-  <!-- Purposes Table -->
   <?php if (empty($purposes)): ?>
     <div class="bg-white rounded-lg shadow p-8 text-center">
       <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,13 +111,10 @@ try {
                     const currentName = '<?php echo addslashes($purpose['name']); ?>';
                     const currentDescription = '<?php echo addslashes($purpose['description'] ?? ''); ?>';
                     const currentRequiresApproval = <?php echo $purpose['requires_approval'] ? 'true' : 'false'; ?>;
-
                     const newName = prompt('Enter new purpose name:', currentName);
                     if (newName === null || newName.trim() === '') return;
-
                     const newDescription = prompt('Enter new description:', currentDescription);
                     const requiresApproval = confirm('Should this purpose require approval?');
-
                     try {
                       const response = await fetch('/api/purposes/edit.php', {
                         method: 'POST',
@@ -135,18 +127,15 @@ try {
                         }),
                         credentials: 'same-origin'
                       });
-
                       const result = await response.json();
                       if (response.ok) {
                         alert('Purpose updated successfully!');
                         location.reload();
-                      } else {
-                        alert('Error: ' + (result.error || 'Unknown error'));
-                      }
+                      } else alert('Error: ' + (result.error || 'Unknown error'));
                     } catch (error) {
                       alert('Network error: ' + error.message);
                     }
-                  })()" class="text-blue-600 hover:text-blue-900" title="Edit Purpose">
+                  })()" class="text-gray-400 hover:text-blue-600" title="Edit Purpose">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
@@ -157,12 +146,10 @@ try {
                     const purposeId = <?php echo $purpose['id']; ?>;
                     const purposeName = '<?php echo addslashes($purpose['name']); ?>';
                     const usageCount = <?php echo $purpose['usage_count']; ?>;
-
                     if (usageCount > 0) {
                       popupSystem.warning('Cannot delete this purpose. It is currently used in ' + usageCount + ' reservation(s).', 'Cannot Delete');
                       return;
                     }
-
                     const confirmed = await popupSystem.confirm(
                       'Are you sure you want to delete this purpose?',
                       'Delete Purpose',
@@ -172,9 +159,7 @@ try {
                         type: 'danger'
                       }
                     );
-
                     if (!confirmed) return;
-
                     try {
                     const response=await fetch('/api/purposes/delete.php', {
                     method: 'POST' ,
@@ -182,18 +167,15 @@ try {
                     body: JSON.stringify({ id: purposeId }),
                     credentials: 'same-origin'
                     });
-
                     const result=await response.json();
                     if (response.ok) {
                     popupSystem.success('Purpose deleted successfully!');
                     location.reload();
-                    } else {
-                    popupSystem.error(result.error || 'Unknown error occurred');
-                    }
+                    } else popupSystem.error(result.error || 'Unknown error occurred');
                     } catch (error) {
                     popupSystem.error('Network error: ' + error.message);
                     }
-                  })()" class="text-red-600 hover:text-red-900" title="Delete Purpose">
+                  })()" class="text-gray-400 hover:text-red-600" title="Delete Purpose">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">

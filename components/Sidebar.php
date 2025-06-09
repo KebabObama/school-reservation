@@ -6,16 +6,12 @@ function render_sidebar(): void
 
   echo <<<HTML
 <aside class="w-64 bg-white shadow-md h-screen flex flex-col">
-  <!-- Header -->
   <div class="p-4 border-b bg-blue-600 text-white">
     <h1 class="font-bold text-xl">Room Manager</h1>
     <p class="text-sm text-blue-100">Welcome, {$user_name}</p>
   </div>
-
-  <!-- Navigation -->
   <nav class="flex-1 overflow-y-auto">
     <div class="p-2">
-      <!-- Main Navigation -->
       <div class="mb-4">
         <h3 class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Main</h3>
         <ul class="space-y-1">
@@ -30,8 +26,6 @@ function render_sidebar(): void
           </li>
         </ul>
       </div>
-
-      <!-- Room Management -->
       <div class="mb-4">
         <h3 class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Room Management</h3>
         <ul class="space-y-1">
@@ -69,8 +63,6 @@ function render_sidebar(): void
           </li>
         </ul>
       </div>
-
-      <!-- Reservation Management -->
       <div class="mb-4">
         <h3 class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Reservations</h3>
         <ul class="space-y-1">
@@ -100,8 +92,6 @@ function render_sidebar(): void
           </li>
         </ul>
       </div>
-
-      <!-- User Management -->
       <div class="mb-4">
         <h3 class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">User Management</h3>
         <ul class="space-y-1">
@@ -127,14 +117,6 @@ function render_sidebar(): void
               Profile
             </button>
           </li>
-          <li>
-            <button onclick="loadPage('PopupDemo')" class="sidebar-menu-item w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 flex items-center">
-              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
-              </svg>
-              Popup Demo
-            </button>
-          </li>
         </ul>
       </div>
 HTML;
@@ -144,8 +126,6 @@ HTML;
   echo <<<HTML
     </div>
   </nav>
-
-  <!-- Footer -->
   <div class="p-4 border-t bg-gray-50">
     <button onclick="logout()" class="w-full flex items-center px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md">
       <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

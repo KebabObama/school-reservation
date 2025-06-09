@@ -26,10 +26,7 @@
 
 declare(strict_types=1);
 
-// Parse command line arguments
 $command = $argv[1] ?? '';
-
-// Parse options manually to handle options after command
 $options = [];
 for ($i = 1; $i < count($argv); $i++) {
   if ($argv[$i] === '--dry-run') {
@@ -40,13 +37,10 @@ for ($i = 1; $i < count($argv); $i++) {
     $options['help'] = true;
   }
 }
-
 if (isset($options['help']) || empty($command)) {
   showHelp();
   exit(0);
 }
-
-// Validate command
 $validCommands = ['status', 'run', 'reset', 'specific'];
 if (!in_array($command, $validCommands)) {
   echo "❌ Invalid command: $command\n";
@@ -56,15 +50,10 @@ if (!in_array($command, $validCommands)) {
 }
 
 try {
-  // Load environment
   $envPath = __DIR__ . '/.env';
-  if (!file_exists($envPath)) {
+  if (!file_exists($envPath))
     throw new RuntimeException('.env file not found. Please create it with database configuration.');
-  }
-
   $env = loadEnv($envPath);
-
-  // Execute the requested command
   switch ($command) {
     case 'status':
       showMigrationStatus($env);
@@ -97,98 +86,65 @@ try {
 function showMigrationStatus(array $env): void
 {
   echo "=== Migration Status ===\n\n";
-
   $pdo = connectToDatabase($env);
-
-  // Get list of migration files
   $migrationFiles = getMigrationFiles(__DIR__ . '/migrations');
-
   if (empty($migrationFiles)) {
     echo "❌ No migration files found in migrations/ directory\n";
     exit(1);
   }
-
-  // Get already run migrations
   $runMigrations = getRunMigrations($pdo);
   $runMigrationFiles = array_column($runMigrations, 'filename');
-
   echo "📊 Migration Status:\n\n";
-
   foreach ($migrationFiles as $file) {
     $isRun = in_array($file, $runMigrationFiles);
     $status = $isRun ? "✅ RUN" : "⏳ PENDING";
-
     if ($isRun) {
       $runInfo = array_values(array_filter($runMigrations, fn($m) => $m['filename'] === $file));
       $runDate = !empty($runInfo) ? $runInfo[0]['executed_at'] : 'unknown';
       echo "  $status  $file (executed: $runDate)\n";
-    } else {
+    } else
       echo "  $status  $file\n";
-    }
   }
-
   $pendingCount = count($migrationFiles) - count($runMigrationFiles);
-
   echo "\n📈 Summary:\n";
   echo "  Total migrations: " . count($migrationFiles) . "\n";
   echo "  Completed: " . count($runMigrationFiles) . "\n";
   echo "  Pending: " . $pendingCount . "\n";
-
-  if ($pendingCount > 0) {
+  if ($pendingCount > 0)
     echo "\n⚠️  You have $pendingCount pending migration(s). Run 'php migrate.php run' to execute them.\n";
-  } else {
+  else
     echo "\n✅ All migrations are up to date!\n";
-  }
 }
 
 function runMigrations(array $env, array $options): void
 {
   $dryRun = isset($options['dry-run']);
   $force = isset($options['force']);
-
   echo "=== Running Migrations ===\n\n";
-
-  if ($dryRun) {
+  if ($dryRun)
     echo "🔍 DRY RUN MODE - No changes will be made\n\n";
-  }
-
-  if ($force) {
+  if ($force)
     echo "⚠️  FORCE MODE - All migrations will be re-run\n\n";
-  }
-
   $pdo = connectToDatabase($env);
-
-  // Create migrations tracking table if it doesn't exist
-  if (!$dryRun) {
+  if (!$dryRun)
     createMigrationsTable($pdo);
-  }
-
-  // Get list of migration files
   $migrationFiles = getMigrationFiles(__DIR__ . '/migrations');
-
   if (empty($migrationFiles)) {
     echo "❌ No migration files found in migrations/ directory\n";
     exit(1);
   }
 
   echo "📁 Found " . count($migrationFiles) . " migration file(s):\n";
-  foreach ($migrationFiles as $file) {
+  foreach ($migrationFiles as $file)
     echo "   - $file\n";
-  }
   echo "\n";
-
-  // Get already run migrations
   $runMigrations = $force ? [] : getRunMigrations($pdo);
-
   if (!empty($runMigrations)) {
     echo "✅ Already run migrations:\n";
-    foreach ($runMigrations as $migration) {
+    foreach ($runMigrations as $migration)
       echo "   - {$migration['filename']} (run on {$migration['executed_at']})\n";
-    }
     echo "\n";
   }
-
-  // Filter out already run migrations
   $pendingMigrations = $force ? $migrationFiles : array_filter($migrationFiles, function ($file) use ($runMigrations) {
     return !in_array($file, array_column($runMigrations, 'filename'));
   });
@@ -200,85 +156,59 @@ function runMigrations(array $env, array $options): void
 
   if ($dryRun) {
     echo "🔍 DRY RUN - Migrations that would be executed:\n";
-    foreach ($pendingMigrations as $file) {
+    foreach ($pendingMigrations as $file)
       echo "   - $file\n";
-    }
     echo "\n✅ Dry run completed. Use 'php migrate.php run' to execute these migrations.\n";
     exit(0);
   }
-
   echo "🔄 Migrations to run:\n";
-  foreach ($pendingMigrations as $file) {
+  foreach ($pendingMigrations as $file) 
     echo "   - $file\n";
-  }
   echo "\n";
-
-  // Run pending migrations
-  foreach ($pendingMigrations as $filename) {
+  foreach ($pendingMigrations as $filename) 
     executeMigration($pdo, $filename);
-  }
-
   echo "\n✅ All migrations completed successfully!\n";
 }
 
 function resetDatabase(array $env, array $options): void
 {
   $force = isset($options['force']);
-
   echo "🚨 === DATABASE RESET === 🚨\n\n";
   echo "⚠️  WARNING: This will completely destroy and recreate your database!\n";
   echo "⚠️  ALL DATA WILL BE PERMANENTLY LOST!\n\n";
-
   if (!$force) {
     echo "Are you absolutely sure you want to reset the database?\n";
     echo "Type 'RESET' to confirm (anything else will cancel): ";
-
     $handle = fopen("php://stdin", "r");
     $line = fgets($handle);
     fclose($handle);
-
     if (trim($line) !== 'RESET') {
       echo "❌ Database reset cancelled\n";
       exit(0);
     }
   }
 
-  // Connect and reset database
   echo "\n🔄 Connecting to MySQL server...\n";
   $pdo = connectToMySQLServer($env);
-
   $dbName = $env['DB_NAME'] ?? 'room_manager';
-
   echo "🗑️  Dropping database '$dbName'...\n";
   $pdo->exec("DROP DATABASE IF EXISTS `$dbName`");
-
   echo "🆕 Creating fresh database '$dbName'...\n";
   $pdo->exec("CREATE DATABASE `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci");
   $pdo->exec("USE `$dbName`");
-
-  // Run the database reset migration
   echo "📋 Running database reset...\n";
   $resetFile = __DIR__ . '/migrations/000_reset_database.php';
-  if (!file_exists($resetFile)) {
+  if (!file_exists($resetFile)) 
     throw new RuntimeException("000_reset_database.php migration file not found!");
-  }
-
-  // Capture output from migration
   ob_start();
   require $resetFile;
   $output = ob_get_clean();
-
-  if (!empty($output)) {
+  if (!empty($output)) 
     echo "Migration output:\n" . $output . "\n";
-  }
-
-  // Now run all migrations in order
   echo "📋 Running all migrations...\n";
   $dbName = $env['DB_NAME'] ?? 'room_manager';
   $pdo->exec("USE `$dbName`");
-
   runMigrations($env, ['--force']);
-
   echo "\n✅ Database reset completed successfully!\n";
   echo "🎉 Fresh database with admin user (admin@spst.cz / admin) is ready!\n";
 }
@@ -287,12 +217,9 @@ function runSpecificMigration(array $env, string $filename): void
 {
   echo "=== Running Specific Migration ===\n\n";
   echo "🔄 Running migration: $filename\n\n";
-
   $pdo = connectToDatabase($env);
   createMigrationsTable($pdo);
-
   executeMigration($pdo, $filename);
-
   echo "\n✅ Migration completed successfully!\n";
 }
 
@@ -378,14 +305,12 @@ function connectToMySQLServer(array $env): PDO
   $port = $env['DB_PORT'] ?? '3306';
   $user = $env['DB_USER'] ?? 'root';
   $pass = $env['DB_PASS'] ?? '';
-
   try {
     $dsn = "mysql:host=$host;port=$port;charset=utf8mb4";
     $pdo = new PDO($dsn, $user, $pass, [
       PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
       PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);
-
     return $pdo;
   } catch (PDOException $e) {
     throw new RuntimeException("MySQL connection failed: " . $e->getMessage());
@@ -404,19 +329,13 @@ function createMigrationsTable(PDO $pdo): void
 
 function getMigrationFiles(string $dir): array
 {
-  if (!is_dir($dir)) {
+  if (!is_dir($dir)) 
     throw new RuntimeException("Migrations directory not found: $dir");
-  }
-
   $files = [];
-
-  // Get any remaining files in root migrations directory first (like 000_reset_database.php)
   $rootFiles = glob($dir . '/*.php');
   $rootFiles = array_map('basename', $rootFiles);
   sort($rootFiles);
   $files = array_merge($files, $rootFiles);
-
-  // Get table creation files second (sorted)
   $tablesDir = $dir . '/tables';
   if (is_dir($tablesDir)) {
     $tableFiles = glob($tablesDir . '/*.php');
@@ -426,8 +345,6 @@ function getMigrationFiles(string $dir): array
     sort($tableFiles);
     $files = array_merge($files, $tableFiles);
   }
-
-  // Get data population files third (sorted)
   $dataDir = $dir . '/data';
   if (is_dir($dataDir)) {
     $dataFiles = glob($dataDir . '/*.php');
@@ -437,62 +354,42 @@ function getMigrationFiles(string $dir): array
     sort($dataFiles);
     $files = array_merge($files, $dataFiles);
   }
-
   return $files;
 }
 
 function getRunMigrations(PDO $pdo): array
 {
   try {
-    // Check if we're connected to a database
     $pdo->query("SELECT DATABASE()")->fetchColumn();
-
-    // Try to get migrations
     $stmt = $pdo->query("SELECT filename, executed_at FROM migrations ORDER BY filename");
     return $stmt->fetchAll();
   } catch (PDOException $e) {
-    // Database or table doesn't exist yet
     return [];
   }
 }
 
 function executeMigration(PDO $pdo, string $filename): void
 {
-  // Handle subdirectory paths
   $filepath = __DIR__ . '/migrations/' . $filename;
-
-  if (!file_exists($filepath)) {
+  if (!file_exists($filepath)) 
     throw new RuntimeException("Migration file not found: $filepath");
-  }
-
   echo "🔄 Running migration: $filename\n";
-
   try {
-    // Capture output from migration
     ob_start();
     require $filepath;
     $output = ob_get_clean();
-
-    if (!empty($output)) {
+    if (!empty($output)) 
       echo "   Output: " . trim($output) . "\n";
-    }
-
-    // If this is 001_init.php, recreate the migrations table since it was dropped
-    if (basename($filename) === '001_init.php') {
+    if (basename($filename) === '001_init.php') 
       createMigrationsTable($pdo);
-    }
-
-    // Record migration as completed
     try {
       $stmt = $pdo->prepare("INSERT IGNORE INTO migrations (filename) VALUES (?)");
       $stmt->execute([$filename]);
     } catch (PDOException $e) {
-      // If migrations table doesn't exist, create it and try again
       createMigrationsTable($pdo);
       $stmt = $pdo->prepare("INSERT IGNORE INTO migrations (filename) VALUES (?)");
       $stmt->execute([$filename]);
     }
-
     echo "✅ Migration completed: $filename\n";
   } catch (Exception $e) {
     echo "❌ Migration failed: $filename\n";

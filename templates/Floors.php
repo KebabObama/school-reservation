@@ -1,22 +1,16 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
+if (session_status() === PHP_SESSION_NONE)
   session_start();
-}
-
 if (!isset($_SESSION['user_id'])) {
   echo '<p class="text-red-600">You must be logged in to view floors.</p>';
   return;
 }
-
 require_once __DIR__ . '/../lib/db.php';
 require_once __DIR__ . '/../lib/permissions.php';
-
-// Check if user has permission to view floors
 if (!canViewFloors($_SESSION['user_id'])) {
   echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to view floors.</p></div>';
   return;
 }
-
 try {
   $stmt = $pdo->query("
     SELECT f.*, 
@@ -32,18 +26,13 @@ try {
 } catch (Exception $e) {
   $floors = [];
 }
-
 function renderDeleteFloorButton($floorId, $floorName, $roomCount)
 {
   $canDelete = canDeleteFloors($_SESSION['user_id']);
-
-  if (!$canDelete) {
+  if (!$canDelete)
     return '';
-  }
-
   $hasRooms = $roomCount > 0;
   $title = $hasRooms ? 'Delete floor and all its rooms and reservations' : 'Delete Floor';
-
   return "
     <button onclick=\"deleteFloorAction($floorId, '$floorName', $roomCount)\"
             class=\"text-gray-400 hover:text-red-600\"
@@ -58,7 +47,6 @@ function renderDeleteFloorButton($floorId, $floorName, $roomCount)
 ?>
 
 <div class="space-y-6">
-  <!-- Header -->
   <div class="flex justify-between items-center">
     <div>
       <h1 class="text-3xl font-bold text-gray-900">Floors</h1>
@@ -75,7 +63,6 @@ function renderDeleteFloorButton($floorId, $floorName, $roomCount)
     <?php endif; ?>
   </div>
 
-  <!-- Floors Grid -->
   <?php if (empty($floors)): ?>
     <div class="bg-white rounded-lg shadow p-8 text-center">
       <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,7 +90,8 @@ function renderDeleteFloorButton($floorId, $floorName, $roomCount)
               </div>
               <div class="flex space-x-2">
                 <?php if (canEditFloors($_SESSION['user_id'])): ?>
-                  <button onclick="loadPage('EditFloor&id=<?php echo $floor['id']; ?>')" class="text-gray-400 hover:text-blue-600" title="Edit Floor">
+                  <button onclick="loadPage('EditFloor&id=<?php echo $floor['id']; ?>')"
+                    class="text-gray-400 hover:text-blue-600" title="Edit Floor">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
@@ -114,11 +102,9 @@ function renderDeleteFloorButton($floorId, $floorName, $roomCount)
                 <?php echo renderDeleteFloorButton($floor['id'], $floor['name'], $floor['room_count']); ?>
               </div>
             </div>
-
             <?php if (!empty($floor['description'])): ?>
               <p class="text-gray-600 text-sm mb-4"><?php echo htmlspecialchars($floor['description']); ?></p>
             <?php endif; ?>
-
             <div class="flex justify-between items-center text-sm text-gray-500">
               <?php if ($floor['level_number'] !== null): ?>
                 <span>Level <?php echo $floor['level_number']; ?></span>
@@ -133,21 +119,16 @@ function renderDeleteFloorButton($floorId, $floorName, $roomCount)
     </div>
   <?php endif; ?>
 </div>
-
 <script>
   async function deleteFloorAction(floorId, floorName, roomCount) {
     let message = `Are you sure you want to delete the floor "${floorName}"?`;
-    if (roomCount > 0) {
+    if (roomCount > 0)
       message += `\n\nThis will also delete:\n• ${roomCount} room(s)\n• All reservations for these rooms`;
-    }
-
     const confirmed = await popupSystem.confirm(
       message,
       'This action cannot be undone.'
     );
-
     if (!confirmed) return;
-
     try {
       const response = await fetch('/api/floors/delete.php', {
         method: 'POST',
@@ -164,9 +145,8 @@ function renderDeleteFloorButton($floorId, $floorName, $roomCount)
       if (response.ok) {
         popupSystem.success(result.message || 'Floor deleted successfully!');
         loadPage('Floors');
-      } else {
+      } else
         popupSystem.error(result.error || 'Failed to delete floor');
-      }
     } catch (error) {
       popupSystem.error('Network error: ' + error.message);
     }

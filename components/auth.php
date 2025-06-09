@@ -37,13 +37,11 @@ function render_auth_component(): void
   function showTab(tab) {
     document.querySelectorAll('.auth-tab').forEach(el => el.classList.add('hidden'));
     document.getElementById(tab).classList.remove('hidden');
-
     const buttons = document.querySelectorAll('#authTabs button');
     buttons.forEach(btn => {
       btn.classList.remove('border-blue-600', 'font-semibold');
       btn.classList.add('border-transparent', 'hover:border-blue-400');
     });
-
     const activeBtn = Array.from(buttons).find(b => b.textContent.toLowerCase() === tab);
     activeBtn.classList.add('border-blue-600', 'font-semibold');
     activeBtn.classList.remove('border-transparent', 'hover:border-blue-400');
@@ -52,16 +50,13 @@ function render_auth_component(): void
   async function handleLogin() {
     const form = document.getElementById('login-form');
     const formData = new FormData(form);
-
     const email = formData.get('email');
     const password = formData.get('password');
-
     if (!email || !password) {
-      if (window.popupSystem) {
+      if (window.popupSystem)
         popupSystem.error('Please enter both email and password');
-      } else {
+      else 
         alert('Please enter both email and password');
-      }
       return;
     }
 
@@ -69,7 +64,6 @@ function render_auth_component(): void
       const result = await authManager.login(email, password);
 
       if (result.success) {
-        // Login successful - reload the page
         if (window.popupSystem) {
           popupSystem.success('Login successful!');
         }
@@ -77,31 +71,25 @@ function render_auth_component(): void
           window.location.reload();
         }, 1000);
       } else {
-        // Login failed
         let errorMessage = result.error || 'Login failed';
-        if (result.remaining_attempts !== undefined) {
+        if (result.remaining_attempts !== undefined) 
           errorMessage += ' (' + result.remaining_attempts + ' attempts remaining)';
-        }
-
-        if (window.popupSystem) {
+        if (window.popupSystem) 
           popupSystem.error(errorMessage);
-        } else {
+        else
           alert(errorMessage);
-        }
       }
     } catch (error) {
-      if (window.popupSystem) {
+      if (window.popupSystem) 
         popupSystem.error('Network error: ' + error.message);
-      } else {
+      else 
         alert('Network error: ' + error.message);
-      }
     }
   }
 
   async function handleRegister() {
     const form = document.getElementById('register-form');
     const formData = new FormData(form);
-
     const data = {
       action: 'register',
       email: formData.get('email'),
@@ -117,31 +105,26 @@ function render_auth_component(): void
         body: new URLSearchParams(data)
       });
 
-      if (response.redirected || response.ok) {
-        // Registration successful - reload the page
+      if (response.redirected || response.ok)
         window.location.reload();
-      } else {
-        // Registration failed
-        if (window.popupSystem) {
+      else {
+        if (window.popupSystem)
           popupSystem.error('Registration failed. Email might already be in use.');
-        } else {
+        else
           alert('Registration failed. Email might already be in use.');
-        }
       }
     } catch (error) {
-      if (window.popupSystem) {
+      if (window.popupSystem)
         popupSystem.error('Network error: ' + error.message);
-      } else {
+      else 
         alert('Network error: ' + error.message);
-      }
+      
     }
   }
 
-  // Handle Enter key in forms
   document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
-
     if (loginForm) {
       loginForm.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
@@ -150,7 +133,6 @@ function render_auth_component(): void
         }
       });
     }
-
     if (registerForm) {
       registerForm.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {

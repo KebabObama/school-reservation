@@ -1,7 +1,6 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
+if (session_status() === PHP_SESSION_NONE)
   session_start();
-}
 if (!isset($_SESSION['user_id'])) {
   echo '<p class="text-red-600">You must be logged in to edit a reservation.</p>';
   return;
@@ -9,8 +8,6 @@ if (!isset($_SESSION['user_id'])) {
 
 require_once __DIR__ . '/../lib/db.php';
 require_once __DIR__ . '/../lib/permissions.php';
-
-// Get reservation ID from URL parameter
 $reservationId = $_GET['id'] ?? null;
 if (!$reservationId) {
   echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Reservation ID is required.</p></div>';
@@ -18,7 +15,6 @@ if (!$reservationId) {
 }
 
 try {
-  // Get reservation data with related information
   $stmt = $pdo->prepare("
     SELECT r.*, u.name as user_name, u.surname as user_surname, u.email as user_email,
            rm.name as room_name, rp.name as purpose_name
@@ -30,19 +26,14 @@ try {
   ");
   $stmt->execute([$reservationId]);
   $reservation = $stmt->fetch();
-
   if (!$reservation) {
     echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Reservation not found.</p></div>';
     return;
   }
-
-  // Check permissions - allow if owner or has edit reservations permission
   if (!canEditSpecificReservation($_SESSION['user_id'], $reservation['user_id'])) {
     echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to edit this reservation.</p></div>';
     return;
   }
-
-  // Get rooms and purposes for dropdowns
   $rooms = $pdo->query("SELECT id, name FROM rooms WHERE is_active = 1 ORDER BY name")->fetchAll();
   $purposes = $pdo->query("SELECT id, name FROM reservation_purposes ORDER BY name")->fetchAll();
 } catch (Exception $e) {
@@ -61,10 +52,7 @@ try {
       </svg>
     </button>
   </div>
-
   <input type="hidden" id="reservation_id" value="<?php echo $reservation['id']; ?>">
-
-  <!-- Reservation Info -->
   <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
       <div>
@@ -102,7 +90,6 @@ try {
       </div>
     </div>
   </div>
-
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <div>
       <label for="room_id" class="block mb-1 font-medium text-gray-700">Room *</label>
@@ -117,7 +104,6 @@ try {
         <?php endforeach; ?>
       </select>
     </div>
-
     <div>
       <label for="purpose_id" class="block mb-1 font-medium text-gray-700">Purpose *</label>
       <select id="purpose_id" name="purpose_id" required
@@ -132,21 +118,18 @@ try {
       </select>
     </div>
   </div>
-
   <div>
     <label for="title" class="block mb-1 font-medium text-gray-700">Title *</label>
     <input id="title" name="title" type="text" required value="<?php echo htmlspecialchars($reservation['title']); ?>"
       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       placeholder="Enter reservation title" />
   </div>
-
   <div>
     <label for="description" class="block mb-1 font-medium text-gray-700">Description</label>
     <textarea id="description" name="description" rows="3"
       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       placeholder="Enter detailed description of the event/meeting"><?php echo htmlspecialchars($reservation['description'] ?? ''); ?></textarea>
   </div>
-
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <div>
       <label for="start_time" class="block mb-1 font-medium text-gray-700">Start Time *</label>
@@ -154,7 +137,6 @@ try {
         value="<?php echo date('Y-m-d\TH:i', strtotime($reservation['start_time'])); ?>"
         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
     </div>
-
     <div>
       <label for="end_time" class="block mb-1 font-medium text-gray-700">End Time *</label>
       <input id="end_time" name="end_time" type="datetime-local" required
@@ -162,7 +144,6 @@ try {
         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
     </div>
   </div>
-
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <div>
       <label for="attendees_count" class="block mb-1 font-medium text-gray-700">Number of Attendees *</label>
@@ -170,7 +151,6 @@ try {
         value="<?php echo $reservation['attendees_count']; ?>"
         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
     </div>
-
     <div>
       <label for="recurring_type" class="block mb-1 font-medium text-gray-700">Recurring</label>
       <select id="recurring_type" name="recurring_type"
@@ -185,29 +165,24 @@ try {
       </select>
     </div>
   </div>
-
   <div id="recurring_end_container" class="<?php echo $reservation['recurring_type'] === 'none' ? 'hidden' : ''; ?>">
     <label for="recurring_end_date" class="block mb-1 font-medium text-gray-700">Recurring End Date</label>
     <input id="recurring_end_date" name="recurring_end_date" type="date"
       value="<?php echo $reservation['recurring_end_date'] ? date('Y-m-d', strtotime($reservation['recurring_end_date'])) : ''; ?>"
       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
   </div>
-
   <div>
     <label for="setup_requirements" class="block mb-1 font-medium text-gray-700">Setup Requirements</label>
     <textarea id="setup_requirements" name="setup_requirements" rows="3"
       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       placeholder="Describe any special setup requirements (e.g., projector setup, seating arrangement, catering)"><?php echo htmlspecialchars($reservation['setup_requirements'] ?? ''); ?></textarea>
   </div>
-
   <div>
     <label for="special_requests" class="block mb-1 font-medium text-gray-700">Special Requests</label>
     <textarea id="special_requests" name="special_requests" rows="3"
       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       placeholder="Any special requests or additional notes (e.g., accessibility needs, equipment requests)"><?php echo htmlspecialchars($reservation['special_requests'] ?? ''); ?></textarea>
   </div>
-
-  <!-- Status change section for users with review status permission -->
   <?php if (canReviewReservationStatus($_SESSION['user_id'])): ?>
     <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
       <h3 class="text-lg font-medium text-blue-800 mb-3">Reservation Status Management</h3>
@@ -225,7 +200,6 @@ try {
             </option>
           </select>
         </div>
-
         <div id="cancellation_reason_container"
           class="<?php echo $reservation['status'] !== 'cancelled' && $reservation['status'] !== 'rejected' ? 'hidden' : ''; ?>">
           <label for="cancellation_reason" class="block mb-1 font-medium text-gray-700">Cancellation/Rejection
@@ -237,20 +211,15 @@ try {
       </div>
     </div>
   <?php endif; ?>
-
   <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200">
     <button type="button" onclick="loadPage('Reservations')"
       class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">Cancel</button>
     <button type="button" onclick="(async function() {
         const form = document.getElementById('edit-reservation-form');
         const formData = new FormData(form);
-        
-        // Convert FormData to JSON
         const data = { id: document.getElementById('reservation_id').value };
-        for (let [key, value] of formData.entries()) {
+        for (let [key, value] of formData.entries())
           if (value) data[key] = value;
-        }
-        
         try {
           const response = await fetch('/api/reservations/edit.php', {
             method: 'POST',
@@ -258,14 +227,11 @@ try {
             body: JSON.stringify(data),
             credentials: 'same-origin'
           });
-          
           const result = await response.json();
           if (response.ok) {
             popupSystem.success('Reservation updated successfully!');
             loadPage('Reservations');
-          } else {
-            popupSystem.error(result.error || 'Unknown error');
-          }
+          } else popupSystem.error(result.error || 'Unknown error');
         } catch (error) {
           popupSystem.error('Network error: ' + error.message);
         }
@@ -274,9 +240,7 @@ try {
       Reservation</button>
   </div>
 </form>
-
 <script>
-  // Show/hide recurring end date based on recurring type
   document.getElementById('recurring_type').addEventListener('change', function() {
     const container = document.getElementById('recurring_end_container');
     if (this.value !== 'none') {
@@ -285,8 +249,6 @@ try {
       container.classList.add('hidden');
     }
   });
-
-  // Show/hide cancellation reason based on status
   document.getElementById('status')?.addEventListener('change', function() {
     const container = document.getElementById('cancellation_reason_container');
     if (container) {
@@ -297,13 +259,9 @@ try {
       }
     }
   });
-
-  // Update end time minimum when start time changes
   document.getElementById('start_time').addEventListener('change', function() {
     document.getElementById('end_time').min = this.value;
   });
-
-  // Validation
   document.getElementById('attendees_count').addEventListener('input', function() {
     if (this.value < 1) {
       this.classList.add('border-red-300');

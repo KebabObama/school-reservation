@@ -25,7 +25,6 @@ try {
 ?>
 
 <div class="space-y-6">
-  <!-- Header -->
   <div class="flex justify-between items-center">
     <div>
       <h1 class="text-3xl font-bold text-gray-900">Room Types</h1>
@@ -39,8 +38,6 @@ try {
       Add Room Type
     </button>
   </div>
-
-  <!-- Room Types Grid -->
   <?php if (empty($roomTypes)): ?>
     <div class="bg-white rounded-lg shadow p-8 text-center">
       <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,12 +75,10 @@ try {
                   const roomTypeId = <?php echo $type['id']; ?>;
                   const roomTypeName = '<?php echo addslashes($type['name']); ?>';
                   const roomCount = <?php echo $type['room_count']; ?>;
-
                   if (roomCount > 0) {
                     popupSystem.warning('Cannot delete this room type. It is currently used by ' + roomCount + ' room(s).', 'Cannot Delete');
                     return;
                   }
-
                   const confirmed = await popupSystem.confirm(
                     'Are you sure you want to delete this room type?',
                     'Delete Room Type',
@@ -93,9 +88,7 @@ try {
                       type: 'danger'
                     }
                   );
-
                   if (!confirmed) return;
-
                   try {
                     const response = await fetch('/api/room-types/delete.php', {
                       method: 'POST',
@@ -103,14 +96,12 @@ try {
                       body: JSON.stringify({ id: roomTypeId }),
                       credentials: 'same-origin'
                     });
-
                     const result = await response.json();
                     if (response.ok) {
                       popupSystem.success('Room type deleted successfully!');
                       location.reload();
-                    } else {
+                    } else 
                       popupSystem.error(result.error || 'Unknown error occurred');
-                    }
                   } catch (error) {
                     popupSystem.error('Network error: ' + error.message);
                   }

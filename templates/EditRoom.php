@@ -9,14 +9,10 @@ if (!isset($_SESSION['user_id'])) {
 
 require_once __DIR__ . '/../lib/db.php';
 require_once __DIR__ . '/../lib/permissions.php';
-
-// Check if user has permission to edit rooms
 if (!canEditRooms($_SESSION['user_id'])) {
   echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to edit rooms.</p></div>';
   return;
 }
-
-// Get room ID from URL parameter
 $roomId = $_GET['id'] ?? null;
 if (!$roomId) {
   echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Room ID is required.</p></div>';
@@ -24,7 +20,6 @@ if (!$roomId) {
 }
 
 try {
-  // Get room data with building and floor information
   $stmt = $pdo->prepare("
     SELECT r.*, b.name as building_name, f.name as floor_name
     FROM rooms r
@@ -34,16 +29,11 @@ try {
   ");
   $stmt->execute([$roomId]);
   $room = $stmt->fetch();
-
   if (!$room) {
     echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Room not found.</p></div>';
     return;
   }
-
-  // Get room types
   $roomTypes = $pdo->query("SELECT id, name FROM room_types ORDER BY name")->fetchAll();
-
-  // Parse JSON fields
   $features = $room['features'] ? json_decode($room['features'], true) : [];
   $availability = $room['availability_schedule'] ? json_decode($room['availability_schedule'], true) : [];
 } catch (Exception $e) {
@@ -61,48 +51,41 @@ try {
       </svg>
     </button>
   </div>
-
   <input type="hidden" id="room_id" value="<?php echo $room['id']; ?>">
-
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <div>
       <label for="name" class="block mb-1 font-medium text-gray-700">Room Name *</label>
-      <input id="name" name="name" type="text" required
-        value="<?php echo htmlspecialchars($room['name']); ?>"
+      <input id="name" name="name" type="text" required value="<?php echo htmlspecialchars($room['name']); ?>"
         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         placeholder="Enter room name" />
     </div>
-
     <div>
       <label for="room_type_id" class="block mb-1 font-medium text-gray-700">Room Type *</label>
       <select id="room_type_id" name="room_type_id" required
         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
         <option value="">Select room type</option>
         <?php foreach ($roomTypes as $type): ?>
-          <option value="<?php echo $type['id']; ?>" <?php echo $room['room_type_id'] == $type['id'] ? 'selected' : ''; ?>>
-            <?php echo htmlspecialchars($type['name']); ?>
-          </option>
+        <option value="<?php echo $type['id']; ?>"
+          <?php echo $room['room_type_id'] == $type['id'] ? 'selected' : ''; ?>>
+          <?php echo htmlspecialchars($type['name']); ?>
+        </option>
         <?php endforeach; ?>
       </select>
     </div>
   </div>
-
   <div>
     <label for="description" class="block mb-1 font-medium text-gray-700">Description (Optional)</label>
     <textarea id="description" name="description" rows="3"
       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       placeholder="Enter room description"><?php echo htmlspecialchars($room['description'] ?? ''); ?></textarea>
   </div>
-
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div>
       <label for="capacity" class="block mb-1 font-medium text-gray-700">Capacity *</label>
-      <input id="capacity" name="capacity" type="number" min="1" required
-        value="<?php echo $room['capacity']; ?>"
+      <input id="capacity" name="capacity" type="number" min="1" required value="<?php echo $room['capacity']; ?>"
         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         placeholder="Number of people" />
     </div>
-
     <div>
       <label for="floor_id" class="block mb-1 font-medium text-gray-700">Location (Building, Floor) *</label>
       <select id="floor_id" name="floor_id" required
@@ -111,23 +94,18 @@ try {
       </select>
     </div>
   </div>
-
   <div>
     <label for="equipment" class="block mb-1 font-medium text-gray-700">Equipment (Optional)</label>
     <textarea id="equipment" name="equipment" rows="3"
       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       placeholder="List available equipment (e.g., Projector, Whiteboard, Audio System)"><?php echo htmlspecialchars($room['equipment'] ?? ''); ?></textarea>
   </div>
-
   <div>
     <label for="image_url" class="block mb-1 font-medium text-gray-700">Image URL</label>
-    <input id="image_url" name="image_url" type="url"
-      value="<?php echo htmlspecialchars($room['image_url'] ?? ''); ?>"
+    <input id="image_url" name="image_url" type="url" value="<?php echo htmlspecialchars($room['image_url'] ?? ''); ?>"
       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       placeholder="https://example.com/room-image.jpg" />
   </div>
-
-  <!-- Features Section -->
   <div>
     <label class="block mb-3 font-medium text-gray-700">Room Features (Optional)</label>
     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -146,19 +124,17 @@ try {
         'parking' => 'Parking Available',
         'security' => '24/7 Security'
       ];
-
       foreach ($availableFeatures as $key => $label): ?>
-        <label class="flex items-center">
-          <input type="checkbox" name="features[]" value="<?php echo $key; ?>"
-            <?php echo in_array($key, $features) ? 'checked' : ''; ?>
-            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-          <span class="ml-2 text-sm text-gray-700"><?php echo $label; ?></span>
-        </label>
+      <label class="flex items-center">
+        <input type="checkbox" name="features[]" value="<?php echo $key; ?>"
+          <?php echo in_array($key, $features) ? 'checked' : ''; ?>
+          class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+        <span class="ml-2 text-sm text-gray-700"><?php echo $label; ?></span>
+      </label>
       <?php endforeach; ?>
     </div>
   </div>
 
-  <!-- Status -->
   <div class="flex items-center">
     <input id="is_active" name="is_active" type="checkbox" <?php echo $room['is_active'] ? 'checked' : ''; ?>
       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
@@ -173,10 +149,8 @@ try {
     <button type="button" onclick="(async function() {
         const form = document.getElementById('edit-room-form');
         const formData = new FormData(form);
-        
-        // Convert FormData to JSON
         const data = { id: document.getElementById('room_id').value };
-        data.features = []; // Initialize empty features array
+        data.features = [];
         for (let [key, value] of formData.entries()) {
           if (key === 'features[]') {
             data.features.push(value);
@@ -184,10 +158,7 @@ try {
             data[key] = value;
           }
         }
-        
-        // Handle checkboxes
         data.is_active = document.getElementById('is_active').checked;
-        
         try {
           const response = await fetch('/api/rooms/edit.php', {
             method: 'POST',
@@ -195,81 +166,64 @@ try {
             body: JSON.stringify(data),
             credentials: 'same-origin'
           });
-          
           const result = await response.json();
           if (response.ok) {
             popupSystem.success('Room updated successfully!');
             loadPage('Rooms');
-          } else {
-            popupSystem.error(result.error || 'Unknown error');
-          }
+          } else popupSystem.error(result.error || 'Unknown error');
         } catch (error) {
           popupSystem.error('Network error: ' + error.message);
         }
       })()"
-      class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Update Room</button>
+      class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Update
+      Room</button>
   </div>
 </form>
 
 <script>
-  // Add validation
-  document.getElementById('name').addEventListener('input', function() {
-    const value = this.value.trim();
-    if (value.length < 2) {
-      this.classList.add('border-red-300');
-    } else {
-      this.classList.remove('border-red-300');
-    }
-  });
+document.getElementById('name').addEventListener('input', function() {
+  const value = this.value.trim();
+  if (value.length < 2) this.classList.add('border-red-300');
+  else this.classList.remove('border-red-300');
+});
 
-  // Features are now optional - no validation needed
-  function validateFeatures() {
-    return true;
-  }
-
-  // Add feature validation to submit button
-  const submitButton = document.querySelector('button[onclick*="edit.php"]');
-  const originalOnclick = submitButton.getAttribute('onclick');
-  submitButton.setAttribute('onclick', 'if (validateFeatures()) { ' + originalOnclick + ' }');
-
-  // Load combined building-floor data on page load
-  document.addEventListener('DOMContentLoaded', async function() {
-    const floorSelect = document.getElementById('floor_id');
-    const currentFloorId = <?php echo $room['floor_id'] ?? 'null'; ?>;
-
-    try {
-      const response = await fetch('/api/floors/list-with-buildings.php');
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const floors = await response.json();
-
-      if (floors.length === 0) {
-        const option = document.createElement('option');
-        option.value = '';
-        option.textContent = 'No locations available';
-        option.disabled = true;
-        floorSelect.appendChild(option);
-      } else {
-        floors.forEach(floor => {
-          const option = document.createElement('option');
-          option.value = floor.floor_id;
-          option.textContent = floor.display_name;
-          if (floor.floor_id == currentFloorId) {
-            option.selected = true;
-          }
-          floorSelect.appendChild(option);
-        });
-      }
-    } catch (error) {
-      console.error('Error loading locations:', error);
+function validateFeatures() {
+  return true;
+}
+const submitButton = document.querySelector('button[onclick*="edit.php"]');
+const originalOnclick = submitButton.getAttribute('onclick');
+submitButton.setAttribute('onclick', 'if (validateFeatures()) { ' + originalOnclick + ' }');
+document.addEventListener('DOMContentLoaded', async function() {
+  const floorSelect = document.getElementById('floor_id');
+  const currentFloorId = <?php echo $room['floor_id'] ?? 'null'; ?>;
+  try {
+    const response = await fetch('/api/floors/list-with-buildings.php');
+    if (!response.ok)
+      throw new Error(`HTTP error! status: ${response.status}`);
+    const floors = await response.json();
+    if (floors.length === 0) {
       const option = document.createElement('option');
       option.value = '';
-      option.textContent = 'Error loading locations';
+      option.textContent = 'No locations available';
       option.disabled = true;
       floorSelect.appendChild(option);
+    } else {
+      floors.forEach(floor => {
+        const option = document.createElement('option');
+        option.value = floor.floor_id;
+        option.textContent = floor.display_name;
+        if (floor.floor_id == currentFloorId)
+          option.selected = true;
+        floorSelect.appendChild(option);
+      });
     }
-  });
+  } catch (error) {
+    console.error('Error loading locations:', error);
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = 'Error loading locations';
+    option.disabled = true;
+    floorSelect.appendChild(option);
+  }
+});
 </script>
