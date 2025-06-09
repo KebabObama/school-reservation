@@ -2,32 +2,20 @@
 if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
-
-// Simple check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-  header('Location: /'); // Redirect to login if not logged in
+  header('Location: /');
   exit;
 }
-
 require_once __DIR__ . '/../lib/db.php';
 require_once __DIR__ . '/../lib/permissions.php';
-
-// Get user permissions for dashboard
 $user_id = $_SESSION['user_id'];
 $canViewRooms = canViewRooms($user_id);
 $canViewReservations = canViewReservations($user_id);
-
-// Get dashboard statistics
 try {
-  // $pdo is available from db.php
-
-  // Get total counts
   $totalUsers = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
   $totalRooms = $pdo->query("SELECT COUNT(*) FROM rooms WHERE is_active = 1")->fetchColumn();
   $totalReservations = $pdo->query("SELECT COUNT(*) FROM reservations")->fetchColumn();
   $pendingReservations = $pdo->query("SELECT COUNT(*) FROM reservations WHERE status = 'pending'")->fetchColumn();
-
-  // Get recent reservations
   $recentReservations = $pdo->query("
         SELECT r.*, u.name as user_name, u.surname as user_surname, rm.name as room_name
         FROM reservations r
@@ -36,8 +24,6 @@ try {
         ORDER BY r.created_at DESC
         LIMIT 5
     ")->fetchAll();
-
-  // Get today's reservations
   $todayReservations = $pdo->query("
         SELECT r.*, u.name as user_name, u.surname as user_surname, rm.name as room_name
         FROM reservations r
@@ -50,11 +36,9 @@ try {
   $totalUsers = $totalRooms = $totalReservations = $pendingReservations = 0;
   $recentReservations = $todayReservations = [];
 }
-
 $user_name = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 $user_surname = htmlspecialchars($_SESSION['user_surname'] ?? '');
 ?>
-
 <div class="space-y-6">
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
     <div class="bg-white rounded-lg shadow p-6">
@@ -72,7 +56,6 @@ $user_surname = htmlspecialchars($_SESSION['user_surname'] ?? '');
         </div>
       </div>
     </div>
-
     <div class="bg-white rounded-lg shadow p-6">
       <div class="flex items-center">
         <div class="p-3 rounded-full bg-green-100 text-green-600">
@@ -88,7 +71,6 @@ $user_surname = htmlspecialchars($_SESSION['user_surname'] ?? '');
         </div>
       </div>
     </div>
-
     <div class="bg-white rounded-lg shadow p-6">
       <div class="flex items-center">
         <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
@@ -103,7 +85,6 @@ $user_surname = htmlspecialchars($_SESSION['user_surname'] ?? '');
         </div>
       </div>
     </div>
-
     <div class="flex items-center">
       <div class="p-3 rounded-full bg-red-100 text-red-600">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,102 +99,96 @@ $user_surname = htmlspecialchars($_SESSION['user_surname'] ?? '');
     </div>
   </div>
 </div>
-
 <?php
-  $hasQuickActions = $canViewRooms || $canViewReservations;
-  if ($hasQuickActions): ?>
-<div class="bg-white rounded-lg shadow p-6">
-  <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-    <?php if ($canViewRooms): ?>
-    <button onclick="loadPage('Rooms')"
-      class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-      <svg class="w-8 h-8 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
-        </path>
-      </svg>
-      <div class="text-left">
-        <p class="font-medium text-gray-900">Manage Rooms</p>
-        <p class="text-sm text-gray-600">Add, edit, or view rooms</p>
-      </div>
-    </button>
-    <?php endif; ?>
-
-    <?php if ($canViewReservations): ?>
-    <button onclick="loadPage('Reservations')"
-      class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-      <svg class="w-8 h-8 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-      </svg>
-      <div class="text-left">
-        <p class="font-medium text-gray-900">View Reservations</p>
-        <p class="text-sm text-gray-600">Manage bookings and approvals</p>
-      </div>
-    </button>
-    <?php endif; ?>
-
-
+$hasQuickActions = $canViewRooms || $canViewReservations;
+if ($hasQuickActions): ?>
+  <div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <?php if ($canViewRooms): ?>
+        <button onclick="loadPage('Rooms')"
+          class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+          <svg class="w-8 h-8 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+            </path>
+          </svg>
+          <div class="text-left">
+            <p class="font-medium text-gray-900">Manage Rooms</p>
+            <p class="text-sm text-gray-600">Add, edit, or view rooms</p>
+          </div>
+        </button>
+      <?php endif; ?>
+      <?php if ($canViewReservations): ?>
+        <button onclick="loadPage('Reservations')"
+          class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+          <svg class="w-8 h-8 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <div class="text-left">
+            <p class="font-medium text-gray-900">View Reservations</p>
+            <p class="text-sm text-gray-600">Manage bookings and approvals</p>
+          </div>
+        </button>
+      <?php endif; ?>
+    </div>
   </div>
-</div>
 <?php endif; ?>
-
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
   <div class="bg-white rounded-lg shadow p-6">
     <h2 class="text-lg font-semibold text-gray-900 mb-4">Today's Reservations</h2>
     <?php if (empty($todayReservations)): ?>
-    <p class="text-gray-600">No reservations scheduled for today.</p>
+      <p class="text-gray-600">No reservations scheduled for today.</p>
     <?php else: ?>
-    <div class="space-y-3">
-      <?php foreach ($todayReservations as $reservation): ?>
-      <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-        <div>
-          <p class="font-medium text-gray-900"><?php echo htmlspecialchars($reservation['title']); ?></p>
-          <p class="text-sm text-gray-600"><?php echo htmlspecialchars($reservation['room_name']); ?></p>
-          <p class="text-sm text-gray-600">
-            <?php echo htmlspecialchars($reservation['user_name'] . ' ' . $reservation['user_surname']); ?></p>
-        </div>
-        <div class="text-right">
-          <p class="text-sm font-medium text-gray-900">
-            <?php echo date('H:i', strtotime($reservation['start_time'])); ?></p>
-          <span
-            class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+      <div class="space-y-3">
+        <?php foreach ($todayReservations as $reservation): ?>
+          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div>
+              <p class="font-medium text-gray-900"><?php echo htmlspecialchars($reservation['title']); ?></p>
+              <p class="text-sm text-gray-600"><?php echo htmlspecialchars($reservation['room_name']); ?></p>
+              <p class="text-sm text-gray-600">
+                <?php echo htmlspecialchars($reservation['user_name'] . ' ' . $reservation['user_surname']); ?></p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm font-medium text-gray-900">
+                <?php echo date('H:i', strtotime($reservation['start_time'])); ?></p>
+              <span
+                class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
                   <?php echo $reservation['status'] === 'accepted' ? 'bg-green-100 text-green-800' : ($reservation['status'] === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'); ?>">
-            <?php echo ucfirst($reservation['status']); ?>
-          </span>
-        </div>
+                <?php echo ucfirst($reservation['status']); ?>
+              </span>
+            </div>
+          </div>
+        <?php endforeach; ?>
       </div>
-      <?php endforeach; ?>
-    </div>
     <?php endif; ?>
   </div>
-
   <div class="bg-white rounded-lg shadow p-6">
     <h2 class="text-lg font-semibold text-gray-900 mb-4">Recent Reservations</h2>
     <?php if (empty($recentReservations)): ?>
-    <p class="text-gray-600">No recent reservations.</p>
+      <p class="text-gray-600">No recent reservations.</p>
     <?php else: ?>
-    <div class="space-y-3">
-      <?php foreach ($recentReservations as $reservation): ?>
-      <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-        <div>
-          <p class="font-medium text-gray-900"><?php echo htmlspecialchars($reservation['title']); ?></p>
-          <p class="text-sm text-gray-600"><?php echo htmlspecialchars($reservation['room_name']); ?></p>
-          <p class="text-sm text-gray-600">
-            <?php echo htmlspecialchars($reservation['user_name'] . ' ' . $reservation['user_surname']); ?></p>
-        </div>
-        <div class="text-right">
-          <p class="text-sm text-gray-600"><?php echo date('M j, Y', strtotime($reservation['start_time'])); ?></p>
-          <span
-            class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+      <div class="space-y-3">
+        <?php foreach ($recentReservations as $reservation): ?>
+          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div>
+              <p class="font-medium text-gray-900"><?php echo htmlspecialchars($reservation['title']); ?></p>
+              <p class="text-sm text-gray-600"><?php echo htmlspecialchars($reservation['room_name']); ?></p>
+              <p class="text-sm text-gray-600">
+                <?php echo htmlspecialchars($reservation['user_name'] . ' ' . $reservation['user_surname']); ?></p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm text-gray-600"><?php echo date('M j, Y', strtotime($reservation['start_time'])); ?></p>
+              <span
+                class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
                   <?php echo $reservation['status'] === 'accepted' ? 'bg-green-100 text-green-800' : ($reservation['status'] === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'); ?>">
-            <?php echo ucfirst($reservation['status']); ?>
-          </span>
-        </div>
+                <?php echo ucfirst($reservation['status']); ?>
+              </span>
+            </div>
+          </div>
+        <?php endforeach; ?>
       </div>
-      <?php endforeach; ?>
-    </div>
     <?php endif; ?>
   </div>
 </div>

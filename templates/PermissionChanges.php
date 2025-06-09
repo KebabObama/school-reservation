@@ -2,24 +2,19 @@
 if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
-
 if (!isset($_SESSION['user_id'])) {
   header('Location: /');
   exit;
 }
-
 require_once __DIR__ . '/../lib/db.php';
 require_once __DIR__ . '/../lib/permissions.php';
-
 if (!canEditUsers($_SESSION['user_id'])) {
   echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to manage user permissions.</p></div>';
   return;
 }
-
 try {
   $allPermissions = getAllPermissionNames();
   $permissionColumns = implode(', p.', $allPermissions);
-
   $usersWithPermissions = $pdo->query("
         SELECT u.id, u.email, u.name, u.surname, u.is_verified,
                p.$permissionColumns
@@ -30,34 +25,32 @@ try {
 } catch (Exception $e) {
   $usersWithPermissions = [];
 }
-
 $permissionCategories = getPermissionCategories();
 $permissions = [];
 foreach ($permissionCategories as $category) {
   $permissions = array_merge($permissions, $category);
 }
 ?>
-
 <div class="space-y-6">
   <div class="flex justify-between items-center">
     <div>
       <h1 class="text-3xl font-bold text-gray-900">Permission Management</h1>
       <p class="text-gray-600">Manage individual user permissions with detailed controls</p>
     </div>
-    <button onclick="loadPage('Permissions')"
-      class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center">
-      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-      </svg>
-      Back to Overview
-    </button>
+    <div class="flex space-x-2">
+      <button onclick="loadPage('Permissions')"
+        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        Back to Overview
+      </button>
+    </div>
   </div>
-
   <div class="bg-white rounded-lg shadow overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200">
       <h2 class="text-lg font-medium text-gray-900">Users & Permissions</h2>
     </div>
-
     <div class="divide-y divide-gray-200">
       <?php foreach ($usersWithPermissions as $user): ?>
       <div class="p-6">
@@ -102,7 +95,6 @@ foreach ($permissionCategories as $category) {
                                            const userId = <?php echo $user['id']; ?>;
                                            const permission = '<?php echo $perm; ?>';
                                            const isChecked = checkbox.checked;
-
                                            try {
                                                const response = await fetch('/api/permissions/update.php', {
                                                    method: 'POST',
@@ -114,7 +106,6 @@ foreach ($permissionCategories as $category) {
                                                    }),
                                                    credentials: 'same-origin'
                                                });
-
                                                const result = await response.json();
                                                if (response.ok) {
                                                    const container = checkbox.closest('.p-3');

@@ -45,7 +45,6 @@ function renderDeleteFloorButton($floorId, $floorName, $roomCount)
   ";
 }
 ?>
-
 <div class="space-y-6">
   <div class="flex justify-between items-center">
     <div>
@@ -62,7 +61,6 @@ function renderDeleteFloorButton($floorId, $floorName, $roomCount)
       </button>
     <?php endif; ?>
   </div>
-
   <?php if (empty($floors)): ?>
     <div class="bg-white rounded-lg shadow p-8 text-center">
       <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +138,6 @@ function renderDeleteFloorButton($floorId, $floorName, $roomCount)
         }),
         credentials: 'same-origin'
       });
-
       const result = await response.json();
       if (response.ok) {
         popupSystem.success(result.message || 'Floor deleted successfully!');

@@ -2,20 +2,16 @@
 if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
-
 if (!isset($_SESSION['user_id'])) {
   echo '<p class="text-red-600">You must be logged in to view buildings.</p>';
   return;
 }
-
 require_once __DIR__ . '/../lib/db.php';
 require_once __DIR__ . '/../lib/permissions.php';
-
 if (!canViewBuildings($_SESSION['user_id'])) {
   echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to view buildings.</p></div>';
   return;
 }
-
 try {
   $stmt = $pdo->query("
     SELECT b.*, 
@@ -31,7 +27,6 @@ try {
 } catch (Exception $e) {
   $buildings = [];
 }
-
 function renderDeleteBuildingButton($buildingId, $buildingName, $floorCount, $roomCount)
 {
   $canDelete = canDeleteBuildings($_SESSION['user_id']);
@@ -51,7 +46,6 @@ function renderDeleteBuildingButton($buildingId, $buildingName, $floorCount, $ro
   ";
 }
 ?>
-
 <div class="space-y-6">
   <div class="flex justify-between items-center">
     <div>
@@ -118,7 +112,6 @@ function renderDeleteBuildingButton($buildingId, $buildingName, $floorCount, $ro
                 <?php echo htmlspecialchars($building['address']); ?>
               </div>
             <?php endif; ?>
-
             <div class="flex justify-between items-center text-sm text-gray-500">
               <span><?php echo $building['floor_count']; ?> floor(s)</span>
               <span><?php echo $building['room_count']; ?> room(s)</span>
@@ -129,7 +122,6 @@ function renderDeleteBuildingButton($buildingId, $buildingName, $floorCount, $ro
     </div>
   <?php endif; ?>
 </div>
-
 <script>
   async function deleteBuildingAction(buildingId, buildingName, floorCount, roomCount) {
     let message = `Are you sure you want to delete the building "${buildingName}"?`;
@@ -152,7 +144,6 @@ function renderDeleteBuildingButton($buildingId, $buildingName, $floorCount, $ro
         }),
         credentials: 'same-origin'
       });
-
       const result = await response.json();
       if (response.ok) {
         popupSystem.success(result.message || 'Building deleted successfully!');

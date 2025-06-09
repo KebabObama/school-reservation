@@ -6,12 +6,11 @@ if (!isset($_SESSION['user_id'])) {
   return;
 }
 require_once __DIR__ . '/../lib/permissions.php';
-if (!canCreateBuildings($_SESSION['user_id'])) {
+if (!hasPermission($_SESSION['user_id'], 'buildings_create')) {
   echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to create buildings.</p></div>';
   return;
 }
 ?>
-
 <form id="create-building-form" class="space-y-6 max-w-2xl mx-auto p-6 bg-white rounded-md shadow-md">
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-2xl font-semibold text-gray-900">Create New Building</h2>
@@ -75,7 +74,6 @@ if (!canCreateBuildings($_SESSION['user_id'])) {
       Building</button>
   </div>
 </form>
-
 <script>
   document.getElementById('name').addEventListener('input', function() {
     const value = this.value.trim();

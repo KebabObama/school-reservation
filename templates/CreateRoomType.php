@@ -6,34 +6,27 @@ if (!isset($_SESSION['user_id'])) {
   echo '<p class="text-red-600">You must be logged in to create a room type.</p>';
   return;
 }
-
 require_once __DIR__ . '/../lib/db.php';
 require_once __DIR__ . '/../lib/permissions.php';
-
-// Check if user has permission to create rooms (room types are part of room management)
-if (!canCreateRooms($_SESSION['user_id'])) {
+if (!hasPermission($_SESSION['user_id'], 'rooms_create')) {
   echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to create room types.</p></div>';
   return;
 }
 ?>
-
 <form id="create-room-type-form" class="space-y-6 max-w-2xl mx-auto p-6 bg-white rounded-md shadow-md">
   <h2 class="text-2xl font-semibold mb-4 text-gray-900">Create New Room Type</h2>
-
   <div>
     <label for="name" class="block mb-1 font-medium text-gray-700">Type Name *</label>
     <input id="name" name="name" type="text" required
       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       placeholder="Enter room type name (e.g., Conference Room, Meeting Room)" />
   </div>
-
   <div>
     <label for="description" class="block mb-1 font-medium text-gray-700">Description *</label>
     <textarea id="description" name="description" rows="4" required
       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       placeholder="Describe this room type, its typical use cases, and characteristics"></textarea>
   </div>
-
   <div>
     <label for="color" class="block mb-1 font-medium text-gray-700">Color *</label>
     <div class="flex items-center space-x-3">
@@ -42,7 +35,6 @@ if (!canCreateRooms($_SESSION['user_id'])) {
       <span class="text-sm text-gray-600">Choose a color to represent this room type in the system</span>
     </div>
   </div>
-
   <!-- Predefined Color Options -->
   <div>
     <label class="block mb-2 font-medium text-gray-700">Quick Color Selection</label>
@@ -62,7 +54,6 @@ if (!canCreateRooms($_SESSION['user_id'])) {
         '#06B6D4' => 'Cyan',
         '#A855F7' => 'Violet'
       ];
-
       foreach ($predefinedColors as $colorCode => $colorName): ?>
         <button type="button"
           onclick="document.getElementById('color').value = '<?php echo $colorCode; ?>'"
@@ -73,7 +64,6 @@ if (!canCreateRooms($_SESSION['user_id'])) {
       <?php endforeach; ?>
     </div>
   </div>
-
   <!-- Usage Guidelines -->
   <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
     <div class="flex">
@@ -95,7 +85,6 @@ if (!canCreateRooms($_SESSION['user_id'])) {
       </div>
     </div>
   </div>
-
   <!-- Example Room Types -->
   <div class="bg-gray-50 border border-gray-200 rounded-md p-4">
     <h3 class="text-sm font-medium text-gray-800 mb-2">Example Room Types</h3>
@@ -118,26 +107,20 @@ if (!canCreateRooms($_SESSION['user_id'])) {
       </div>
     </div>
   </div>
-
   <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200">
     <button type="button" onclick="loadPage('RoomTypes')"
       class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">Cancel</button>
     <button type="button" onclick="(async function() {
         const form = document.getElementById('create-room-type-form');
         const formData = new FormData(form);
-        
-        // Convert FormData to JSON
         const data = {};
         for (let [key, value] of formData.entries()) {
           if (value.trim()) data[key] = value.trim();
         }
-        
-        // Validate required fields
         if (!data.name || !data.description || !data.color) {
           alert('Please fill in all required fields.');
           return;
         }
-        
         try {
           const response = await fetch('/api/room-types/create.php', {
             method: 'POST',
@@ -145,7 +128,6 @@ if (!canCreateRooms($_SESSION['user_id'])) {
             body: JSON.stringify(data),
             credentials: 'same-origin'
           });
-          
           const result = await response.json();
           if (response.ok && result.room_type_id) {
             popupSystem.success('Room type created successfully!');
@@ -160,13 +142,10 @@ if (!canCreateRooms($_SESSION['user_id'])) {
       class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Create Room Type</button>
   </div>
 </form>
-
 <script>
-  // Add real-time validation
   document.getElementById('name').addEventListener('input', function() {
     const value = this.value.trim();
     const button = document.querySelector('button[onclick*="create.php"]');
-
     if (value.length < 2) {
       this.classList.add('border-red-300');
       button.disabled = true;
@@ -177,7 +156,6 @@ if (!canCreateRooms($_SESSION['user_id'])) {
       button.classList.remove('opacity-50', 'cursor-not-allowed');
     }
   });
-
   document.getElementById('description').addEventListener('input', function() {
     const value = this.value.trim();
     if (value.length < 10) {
@@ -186,10 +164,7 @@ if (!canCreateRooms($_SESSION['user_id'])) {
       this.classList.remove('border-red-300');
     }
   });
-
-  // Color preview update
   document.getElementById('color').addEventListener('change', function() {
     const colorValue = this.value;
-    // You could add a preview here if needed
   });
 </script>

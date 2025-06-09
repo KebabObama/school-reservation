@@ -1,11 +1,9 @@
 <?php
 require_once __DIR__ . '/db.php';
-
 function generateSecureToken(): string
 {
   return bin2hex(random_bytes(32));
 }
-
 function createAuthToken(int $userId, int $expirationHours = 24): array
 {
   global $pdo;
@@ -20,7 +18,6 @@ function createAuthToken(int $userId, int $expirationHours = 24): array
     'expires_in' => $expirationHours * 3600
   ];
 }
-
 function validateAuthToken(string $token): ?array
 {
   global $pdo;
@@ -43,11 +40,9 @@ function validateAuthToken(string $token): ?array
     'expires_at' => $result['expires_at']
   ];
 }
-
 function cleanupExpiredTokens(?int $userId = null): void
 {
   global $pdo;
-
   if ($userId) {
     $stmt = $pdo->prepare('DELETE FROM tokens WHERE user_id = ? AND expires_at <= NOW()');
     $stmt->execute([$userId]);
@@ -56,7 +51,6 @@ function cleanupExpiredTokens(?int $userId = null): void
     $stmt->execute();
   }
 }
-
 function revokeToken(string $token): bool
 {
   global $pdo;
@@ -64,14 +58,12 @@ function revokeToken(string $token): bool
   $stmt->execute([$token]);
   return $stmt->rowCount() > 0;
 }
-
 function revokeAllUserTokens(int $userId): void
 {
   global $pdo;
   $stmt = $pdo->prepare('DELETE FROM tokens WHERE user_id = ?');
   $stmt->execute([$userId]);
 }
-
 function loginWithToken(string $email, string $password): array
 {
   global $pdo;
@@ -92,16 +84,13 @@ function loginWithToken(string $email, string $password): array
     'expires_in' => $tokenData['expires_in']
   ];
 }
-
 function login(string $email, string $password): void
 {
   $result = loginWithToken($email, $password);
 }
-
 function register(string $email, string $name, string $surname, string $password): void
 {
   global $pdo;
-
   $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
   $stmt->execute([$email]);
   if ($stmt->fetch())
@@ -110,7 +99,6 @@ function register(string $email, string $name, string $surname, string $password
   $stmt = $pdo->prepare('INSERT INTO users (email, name, surname, password_hash, is_verified) VALUES (?, ?, ?, ?, 0)');
   $stmt->execute([$email, $name, $surname, $hash]);
 }
-
 function logout(?string $token = null): void
 {
   if ($token)
@@ -118,4 +106,4 @@ function logout(?string $token = null): void
   if (isset($_SESSION['user_id']))
     revokeAllUserTokens($_SESSION['user_id']);
   session_destroy();
-}
+}

@@ -1,21 +1,15 @@
-/**
- * Confirm Dialog Component
- * Full-featured popup for user confirmations with Yes/No or custom buttons
- */
-
 class ConfirmDialog {
   constructor(message, title = 'Confirm', options = {}, callback = null) {
     this.message = message;
     this.title = title;
     this.callback = callback;
-    
-    // Default options
+
     this.options = {
       confirmText: 'Yes',
       cancelText: 'No',
       confirmClass: 'popup-btn-primary',
       cancelClass: 'popup-btn-secondary',
-      type: 'warning', // warning, danger, info
+      type: 'warning',
       ...options
     };
   }
@@ -76,14 +70,11 @@ class ConfirmDialog {
   }
 
   create() {
-    // Create dialog content with Tailwind classes for consistent styling
     const dialog = document.createElement('div');
     dialog.className = 'w-[400px] p-6';
 
-    // Get button styles based on type
     const { confirmButtonClass, cancelButtonClass } = this.getButtonClasses();
 
-    // Get icon styling
     const iconClass = `w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center ${this.getIconClasses()}`;
 
     dialog.innerHTML = `
@@ -102,7 +93,6 @@ class ConfirmDialog {
       </div>
     `;
 
-    // Use PopupSystem's createOverlay for consistent centering
     const overlay = window.popupSystem ?
       window.popupSystem.createOverlay(dialog.outerHTML) :
       this.createFallbackOverlay(dialog);
@@ -147,7 +137,6 @@ class ConfirmDialog {
     if (window.popupSystem) {
       window.popupSystem.closePopup(overlay);
     } else {
-      // Fallback if popup system not available
       overlay.classList.remove('show');
       setTimeout(() => {
         if (overlay.parentNode) {
@@ -164,7 +153,6 @@ class ConfirmDialog {
   }
 }
 
-// Export for module usage
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = ConfirmDialog;
 }

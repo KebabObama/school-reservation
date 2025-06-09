@@ -5,26 +5,21 @@ if (!isset($_SESSION['user_id'])) {
   echo '<p class="text-red-600">You must be logged in to edit a room type.</p>';
   return;
 }
-
 require_once __DIR__ . '/../lib/db.php';
 require_once __DIR__ . '/../lib/permissions.php';
-
 if (!canEditRooms($_SESSION['user_id'])) {
   echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to edit room types.</p></div>';
   return;
 }
-
 $roomTypeId = $_GET['id'] ?? null;
 if (!$roomTypeId) {
   echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Room type ID is required.</p></div>';
   return;
 }
-
 try {
   $stmt = $pdo->prepare("SELECT * FROM room_types WHERE id = ?");
   $stmt->execute([$roomTypeId]);
   $roomType = $stmt->fetch();
-
   if (!$roomType) {
     echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Room type not found.</p></div>';
     return;
@@ -37,7 +32,6 @@ try {
   return;
 }
 ?>
-
 <form id="edit-room-type-form" class="space-y-6 max-w-2xl mx-auto p-6 bg-white rounded-md shadow-md">
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-2xl font-semibold text-gray-900">Edit Room Type: <?php echo htmlspecialchars($roomType['name']); ?>
@@ -62,21 +56,18 @@ try {
       </span>
     </div>
   </div>
-
   <div>
     <label for="name" class="block mb-1 font-medium text-gray-700">Type Name *</label>
     <input id="name" name="name" type="text" required value="<?php echo htmlspecialchars($roomType['name']); ?>"
       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       placeholder="Enter room type name" />
   </div>
-
   <div>
     <label for="description" class="block mb-1 font-medium text-gray-700">Description *</label>
     <textarea id="description" name="description" rows="4" required
       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       placeholder="Describe this room type"><?php echo htmlspecialchars($roomType['description'] ?? ''); ?></textarea>
   </div>
-
   <div>
     <label for="color" class="block mb-1 font-medium text-gray-700">Color *</label>
     <div class="flex items-center space-x-3">
@@ -103,7 +94,6 @@ try {
         '#06B6D4' => 'Cyan',
         '#A855F7' => 'Violet'
       ];
-
       foreach ($predefinedColors as $colorCode => $colorName): ?>
       <button type="button" onclick="document.getElementById('color').value = '<?php echo $colorCode; ?>'"
         class="w-8 h-8 rounded-md border-2 border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 <?php echo $roomType['color'] === $colorCode ? 'ring-2 ring-blue-500' : ''; ?>"
@@ -112,7 +102,6 @@ try {
       <?php endforeach; ?>
     </div>
   </div>
-
   <?php if ($roomCount > 0): ?>
   <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4">
     <div class="flex">
@@ -134,7 +123,6 @@ try {
     </div>
   </div>
   <?php endif; ?>
-
   <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200">
     <button type="button" onclick="loadPage('RoomTypes')"
       class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">Cancel</button>
@@ -156,7 +144,6 @@ try {
             popupSystem.success('Room type updated successfully!');
             loadPage('RoomTypes');
           } else popupSystem.error(result.error || 'Unknown error');
-          
         } catch (error) {
           popupSystem.error('Network error: ' + error.message);
         }
@@ -165,7 +152,6 @@ try {
       Room Type</button>
   </div>
 </form>
-
 <script>
 document.getElementById('name').addEventListener('input', function() {
   document.getElementById('name-preview').textContent = this.value || 'Room Type Name';

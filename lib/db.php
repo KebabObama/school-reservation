@@ -1,7 +1,5 @@
 <?php
-
 declare(strict_types=1);
-
 $envPath = __DIR__ . '/../.env';
 if (!file_exists($envPath))
   throw new RuntimeException('.env file not found');
@@ -24,4 +22,4 @@ try {
   ]);
 } catch (PDOException $e) {
   exit('Database connection failed: ' . $e->getMessage());
-}
+}

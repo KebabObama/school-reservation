@@ -1,21 +1,17 @@
 <?php
 require_once __DIR__ . '/db.php';
-
 function hasPermission($userId, $permission)
 {
   global $pdo;
-
   try {
     $stmt = $pdo->prepare("SELECT $permission FROM permissions WHERE user_id = ?");
     $stmt->execute([$userId]);
     $result = $stmt->fetchColumn();
-
     return (bool)$result;
   } catch (Exception $e) {
     return false;
   }
 }
-
 function hasAnyPermission($userId, $permissions)
 {
   foreach ($permissions as $permission) {
@@ -25,7 +21,6 @@ function hasAnyPermission($userId, $permissions)
   }
   return false;
 }
-
 function hasAllPermissions($userId, $permissions)
 {
   foreach ($permissions as $permission) {
@@ -35,139 +30,110 @@ function hasAllPermissions($userId, $permissions)
   }
   return true;
 }
-
-
 function getUserPermissions($userId)
 {
   global $pdo;
-
   try {
     $stmt = $pdo->prepare("SELECT * FROM permissions WHERE user_id = ?");
     $stmt->execute([$userId]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
     return $result ?: [];
   } catch (Exception $e) {
     return [];
   }
 }
-
-
 function canViewRooms($userId)
 {
   return hasPermission($userId, 'rooms_view');
 }
-
 function canCreateRooms($userId)
 {
   return hasPermission($userId, 'rooms_create');
 }
-
 function canEditRooms($userId)
 {
-  return hasPermission($userId, 'rooms_edit');
+  return hasPermission($userId, 'rooms_edit') && canViewRooms($userId);
 }
-
 function canDeleteRooms($userId)
 {
-  return hasPermission($userId, 'rooms_delete');
+  return hasPermission($userId, 'rooms_delete') && canViewRooms($userId);
 }
-
 function canViewBuildings($userId)
 {
   return hasPermission($userId, 'buildings_view');
 }
-
 function canCreateBuildings($userId)
 {
   return hasPermission($userId, 'buildings_create');
 }
-
 function canEditBuildings($userId)
 {
-  return hasPermission($userId, 'buildings_edit');
+  return hasPermission($userId, 'buildings_edit') && canViewBuildings($userId);
 }
-
 function canDeleteBuildings($userId)
 {
-  return hasPermission($userId, 'buildings_delete');
+  return hasPermission($userId, 'buildings_delete') && canViewBuildings($userId);
 }
-
 function canViewFloors($userId)
 {
   return hasPermission($userId, 'floors_view');
 }
-
 function canCreateFloors($userId)
 {
   return hasPermission($userId, 'floors_create');
 }
-
 function canEditFloors($userId)
 {
-  return hasPermission($userId, 'floors_edit');
+  return hasPermission($userId, 'floors_edit') && canViewFloors($userId);
 }
-
 function canDeleteFloors($userId)
 {
-  return hasPermission($userId, 'floors_delete');
+  return hasPermission($userId, 'floors_delete') && canViewFloors($userId);
 }
-
 function canViewReservations($userId)
 {
   return hasPermission($userId, 'reservations_view');
 }
-
 function canCreateReservations($userId)
 {
   return hasPermission($userId, 'reservations_create');
 }
-
 function canEditReservations($userId)
 {
-  return hasPermission($userId, 'reservations_edit');
+  return hasPermission($userId, 'reservations_edit') && canViewReservations($userId);
 }
-
 function canDeleteReservations($userId)
 {
-  return hasPermission($userId, 'reservations_delete');
+  return hasPermission($userId, 'reservations_delete') && canViewReservations($userId);
 }
-
 function canReviewReservationStatus($userId)
 {
-  return hasPermission($userId, 'reservations_review_status');
+  return hasPermission($userId, 'reservations_review_status') && canViewReservations($userId);
 }
-
 function canViewUsers($userId)
 {
   return hasPermission($userId, 'users_view');
 }
-
 function canCreateUsers($userId)
 {
-  return hasPermission($userId, 'users_create');
+  return hasPermission($userId, 'users_create') && canViewUsers($userId);
 }
-
 function canEditUsers($userId)
 {
-  return hasPermission($userId, 'users_edit');
+  return hasPermission($userId, 'users_edit') && canViewUsers($userId);
 }
-
 function canDeleteUsers($userId)
 {
-  return hasPermission($userId, 'users_delete');
+  return hasPermission($userId, 'users_delete') && canViewUsers($userId);
 }
-
 function canEditSpecificReservation($userId, $reservationUserId)
 {
   return $userId == $reservationUserId || canEditReservations($userId);
 }
-
 function canDeleteSpecificReservation($userId, $reservationUserId)
 {
   return $userId == $reservationUserId || canDeleteReservations($userId);
 }
-
 function getPermissionCategories()
 {
   return [
@@ -204,7 +170,6 @@ function getPermissionCategories()
     ]
   ];
 }
-
 function getAllPermissionNames()
 {
   $categories = getPermissionCategories();
@@ -212,4 +177,4 @@ function getAllPermissionNames()
   foreach ($categories as $category)
     $permissions = array_merge($permissions, array_keys($category));
   return $permissions;
-}
+}

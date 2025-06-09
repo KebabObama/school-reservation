@@ -2,15 +2,16 @@
 if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
-
 if (!isset($_SESSION['user_id'])) {
   header('Location: /');
   exit;
 }
-
 require_once __DIR__ . '/../lib/db.php';
-
-// Get room types
+require_once __DIR__ . '/../lib/permissions.php';
+if (!canViewRooms($_SESSION['user_id'])) {
+  echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to view room types.</p></div>';
+  return;
+}
 try {
   $roomTypes = $pdo->query("
         SELECT rt.*, COUNT(r.id) as room_count 
@@ -23,7 +24,6 @@ try {
   $roomTypes = [];
 }
 ?>
-
 <div class="space-y-6">
   <div class="flex justify-between items-center">
     <div>
@@ -114,11 +114,9 @@ try {
                 </button>
               </div>
             </div>
-
             <?php if ($type['description']): ?>
               <p class="text-gray-600 mb-4"><?php echo htmlspecialchars($type['description']); ?></p>
             <?php endif; ?>
-
             <div class="flex items-center justify-between text-sm">
               <span class="text-gray-500">
                 <?php echo $type['room_count']; ?> room<?php echo $type['room_count'] !== 1 ? 's' : ''; ?>

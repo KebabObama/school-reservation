@@ -1,15 +1,9 @@
 <?php
-
 declare(strict_types=1);
-
 echo "Creating rooms table...\n";
-
-// Get database connection from parent scope
 if (!isset($pdo)) {
     require_once __DIR__ . '/../../lib/db.php';
 }
-
-// Create rooms table
 $roomsTableSql = <<<SQL
 CREATE TABLE IF NOT EXISTS rooms (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -35,7 +29,5 @@ CREATE TABLE IF NOT EXISTS rooms (
     INDEX idx_room_floor (floor_id)
 );
 SQL;
-
 $pdo->exec($roomsTableSql);
-
 echo "✅ Rooms table created successfully\n";

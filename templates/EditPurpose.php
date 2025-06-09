@@ -5,18 +5,10 @@ if (!isset($_SESSION['user_id'])) {
   echo '<p class="text-red-600">You must be logged in to edit a purpose.</p>';
   return;
 }
-
 require_once __DIR__ . '/../lib/db.php';
-try {
-  $stmt = $pdo->prepare("SELECT can_manage_users FROM permissions WHERE user_id = ?");
-  $stmt->execute([$_SESSION['user_id']]);
-  $canManage = $stmt->fetchColumn();
-  if (!$canManage) {
-    echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to edit reservation purposes.</p></div>';
-    return;
-  }
-} catch (Exception $e) {
-  echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Unable to verify permissions.</p></div>';
+require_once __DIR__ . '/../lib/permissions.php';
+if (!canEditUsers($_SESSION['user_id'])) {
+  echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Access Denied</h1><p>You do not have permission to edit reservation purposes.</p></div>';
   return;
 }
 $purposeId = $_GET['id'] ?? null;
@@ -24,7 +16,6 @@ if (!$purposeId) {
   echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Purpose ID is required.</p></div>';
   return;
 }
-
 try {
   $stmt = $pdo->prepare("SELECT * FROM reservation_purposes WHERE id = ?");
   $stmt->execute([$purposeId]);
@@ -41,7 +32,6 @@ try {
   return;
 }
 ?>
-
 <form id="edit-purpose-form" class="space-y-6 max-w-2xl mx-auto p-6 bg-white rounded-md shadow-md">
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-2xl font-semibold text-gray-900">Edit Purpose: <?php echo htmlspecialchars($purpose['name']); ?>
@@ -156,7 +146,6 @@ try {
       </div>
     </div>
   </div>
-
   <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200">
     <button type="button" onclick="loadPage('ReservationPurposes')"
       class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">Cancel</button>
@@ -189,7 +178,6 @@ try {
       Purpose</button>
   </div>
 </form>
-
 <script>
   document.getElementById('name').addEventListener('input', function() {
     const value = this.value.trim();

@@ -6,7 +6,6 @@ if (!isset($_SESSION['user_id'])) {
   echo '<p class="text-red-600">You must be logged in to edit a room.</p>';
   return;
 }
-
 require_once __DIR__ . '/../lib/db.php';
 require_once __DIR__ . '/../lib/permissions.php';
 if (!canEditRooms($_SESSION['user_id'])) {
@@ -18,7 +17,6 @@ if (!$roomId) {
   echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Room ID is required.</p></div>';
   return;
 }
-
 try {
   $stmt = $pdo->prepare("
     SELECT r.*, b.name as building_name, f.name as floor_name
@@ -41,7 +39,6 @@ try {
   return;
 }
 ?>
-
 <form id="edit-room-form" class="space-y-6 max-w-4xl mx-auto p-6 bg-white rounded-md shadow-md">
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-2xl font-semibold text-gray-900">Edit Room: <?php echo htmlspecialchars($room['name']); ?></h2>
@@ -134,7 +131,6 @@ try {
       <?php endforeach; ?>
     </div>
   </div>
-
   <div class="flex items-center">
     <input id="is_active" name="is_active" type="checkbox" <?php echo $room['is_active'] ? 'checked' : ''; ?>
       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
@@ -142,7 +138,6 @@ try {
       Room is active and available for booking
     </label>
   </div>
-
   <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200">
     <button type="button" onclick="loadPage('Rooms')"
       class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">Cancel</button>
@@ -179,14 +174,12 @@ try {
       Room</button>
   </div>
 </form>
-
 <script>
 document.getElementById('name').addEventListener('input', function() {
   const value = this.value.trim();
   if (value.length < 2) this.classList.add('border-red-300');
   else this.classList.remove('border-red-300');
 });
-
 function validateFeatures() {
   return true;
 }

@@ -1,19 +1,13 @@
-/**
- * Input Dialog Component
- * Full-featured popup for collecting user input with validation
- */
-
 class InputDialog {
   constructor(message, title = 'Input Required', defaultValue = '', options = {}, callback = null) {
     this.message = message;
     this.title = title;
     this.defaultValue = defaultValue;
     this.callback = callback;
-    
-    // Default options
+
     this.options = {
       placeholder: '',
-      inputType: 'text', // text, password, email, number, etc.
+      inputType: 'text',
       required: true,
       maxLength: null,
       minLength: null,
@@ -22,17 +16,15 @@ class InputDialog {
       cancelText: 'Cancel',
       confirmClass: 'popup-btn-primary',
       cancelClass: 'popup-btn-secondary',
-      validator: null, // Custom validation function
+      validator: null,
       ...options
     };
   }
 
   create() {
-    // Create dialog content with Tailwind classes for consistent styling
     const dialog = document.createElement('div');
     dialog.className = 'w-[400px] p-6';
 
-    // Build input attributes
     let inputAttributes = `
       type="${this.options.inputType}"
       placeholder="${this.escapeHtml(this.options.placeholder)}"
@@ -72,21 +64,18 @@ class InputDialog {
       </div>
     `;
 
-    // Use PopupSystem's createOverlay for consistent centering
     const overlay = window.popupSystem ?
       window.popupSystem.createOverlay(dialog.outerHTML) :
       this.createFallbackOverlay(dialog);
-    
+
     const input = overlay.querySelector('input');
     const okButton = overlay.querySelector('button:last-child');
-    
-    // Focus the input field
+
     setTimeout(() => {
       input.focus();
       input.select();
     }, 100);
-    
-    // Handle Enter key in input
+
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -198,7 +187,6 @@ class InputDialog {
     if (window.popupSystem) {
       window.popupSystem.closePopup(overlay);
     } else {
-      // Fallback if popup system not available
       overlay.classList.remove('show');
       setTimeout(() => {
         if (overlay.parentNode) {
@@ -236,7 +224,6 @@ class InputDialog {
   }
 }
 
-// Export for module usage
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = InputDialog;
 }

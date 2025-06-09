@@ -1,15 +1,10 @@
-/**
- * Alert Dialog Component
- * Full-featured popup for displaying important messages to users
- */
-
 class AlertDialog {
   constructor(message, title = 'Alert', type = 'info', callback = null) {
     this.message = message;
     this.title = title;
-    this.type = type; // info, success, warning, error
+    this.type = type;
     this.callback = callback;
-    this.buttonText = 'OK'; // Add missing buttonText property
+    this.buttonText = 'OK';
   }
 
   getIcon() {
@@ -53,13 +48,11 @@ class AlertDialog {
         </button>
       </div>
     `;
-    
-    // Use PopupSystem's createOverlay for consistent centering
+
     const overlay = window.popupSystem ?
       window.popupSystem.createOverlay(dialog.outerHTML) :
       this.createFallbackOverlay(dialog);
 
-    // Handle OK button click
     overlay.addEventListener('click', (e) => {
       const button = e.target.closest('button[data-action="ok"]');
       if (button) {
@@ -67,7 +60,6 @@ class AlertDialog {
       }
     });
 
-    // Handle escape key
     const handleKeydown = (e) => {
       if (e.key === 'Escape') {
         this.close(overlay);
@@ -76,7 +68,6 @@ class AlertDialog {
     };
     document.addEventListener('keydown', handleKeydown);
 
-    // Close on overlay click
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         this.close(overlay);
@@ -106,7 +97,6 @@ class AlertDialog {
     if (window.popupSystem) {
       window.popupSystem.closePopup(overlay);
     } else {
-      // Fallback if popup system not available
       overlay.classList.remove('show');
       setTimeout(() => {
         if (overlay.parentNode) {
@@ -133,7 +123,6 @@ class AlertDialog {
   }
 }
 
-// Export for module usage
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = AlertDialog;
 }

@@ -1,15 +1,9 @@
 <?php
-
 declare(strict_types=1);
-
 echo "Creating permissions table...\n";
-
-// Get database connection from parent scope
 if (!isset($pdo)) {
     require_once __DIR__ . '/../../lib/db.php';
 }
-
-// Create permissions table
 $permissionsTableSql = <<<SQL
 CREATE TABLE IF NOT EXISTS permissions (
     user_id INT PRIMARY KEY,
@@ -42,7 +36,5 @@ CREATE TABLE IF NOT EXISTS permissions (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 SQL;
-
 $pdo->exec($permissionsTableSql);
-
 echo "✅ Permissions table created successfully\n";

@@ -1,10 +1,5 @@
 <?php
 require_once __DIR__ . '/auth.php';
-
-/**
- * Token-based authentication middleware
- * Supports both session-based and token-based authentication
- */
 class TokenMiddleware
 {
   public static function authenticate(): ?array
@@ -36,10 +31,8 @@ class TokenMiddleware
         ];
       }
     }
-
     return null;
   }
-
   private static function extractToken(): ?string
   {
     $headers = getallheaders();
@@ -55,7 +48,6 @@ class TokenMiddleware
     if (isset($_POST['token'])) {
       return $_POST['token'];
     }
-
     return null;
   }
   public static function requireAuth(): array
@@ -69,7 +61,6 @@ class TokenMiddleware
     }
     return $userData;
   }
-
   public static function generateCSRFToken(): string
   {
     if (session_status() === PHP_SESSION_NONE)
@@ -115,7 +106,6 @@ class TokenMiddleware
     });
     return max(0, $maxAttempts - count($_SESSION[$key]));
   }
-
   public static function clearRateLimit(string $identifier): void
   {
     if (session_status() === PHP_SESSION_NONE) 
@@ -128,7 +118,6 @@ function requireAuth(): array
 {
   return TokenMiddleware::requireAuth();
 }
-
 function getAuthenticatedUser(): ?array
 {
   return TokenMiddleware::authenticate();

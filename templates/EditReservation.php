@@ -5,7 +5,6 @@ if (!isset($_SESSION['user_id'])) {
   echo '<p class="text-red-600">You must be logged in to edit a reservation.</p>';
   return;
 }
-
 require_once __DIR__ . '/../lib/db.php';
 require_once __DIR__ . '/../lib/permissions.php';
 $reservationId = $_GET['id'] ?? null;
@@ -13,7 +12,6 @@ if (!$reservationId) {
   echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Error</h1><p>Reservation ID is required.</p></div>';
   return;
 }
-
 try {
   $stmt = $pdo->prepare("
     SELECT r.*, u.name as user_name, u.surname as user_surname, u.email as user_email,
@@ -41,7 +39,6 @@ try {
   return;
 }
 ?>
-
 <form id="edit-reservation-form" class="space-y-6 max-w-4xl mx-auto p-6 bg-white rounded-md shadow-md">
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-2xl font-semibold text-gray-900">Edit Reservation:

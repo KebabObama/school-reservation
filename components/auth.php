@@ -3,7 +3,6 @@ function render_auth_component(): void
 {
   echo <<<HTML
 <h2 class="text-2xl font-bold mb-6 text-center">Room Manager</h2>
-
 <div>
   <ul class="flex mb-6 border-b" id="authTabs">
     <li class="mr-6">
@@ -13,7 +12,6 @@ function render_auth_component(): void
       <button class="pb-2 border-b-2 border-transparent hover:border-blue-400" onclick="showTab('register')">Register</button>
     </li>
   </ul>
-
   <div id="login" class="auth-tab">
     <form id="login-form" class="space-y-4">
       <input required name="email" type="email" placeholder="Email" class="w-full p-2 border rounded" />
@@ -21,7 +19,6 @@ function render_auth_component(): void
       <button type="button" onclick="handleLogin()" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">Login</button>
     </form>
   </div>
-
   <div id="register" class="auth-tab hidden">
     <form id="register-form" class="space-y-4">
       <input required name="email" type="email" placeholder="Email" class="w-full p-2 border rounded" />
@@ -32,7 +29,6 @@ function render_auth_component(): void
     </form>
   </div>
 </div>
-
 <script>
   function showTab(tab) {
     document.querySelectorAll('.auth-tab').forEach(el => el.classList.add('hidden'));
@@ -46,7 +42,6 @@ function render_auth_component(): void
     activeBtn.classList.add('border-blue-600', 'font-semibold');
     activeBtn.classList.remove('border-transparent', 'hover:border-blue-400');
   }
-
   async function handleLogin() {
     const form = document.getElementById('login-form');
     const formData = new FormData(form);
@@ -59,10 +54,8 @@ function render_auth_component(): void
         alert('Please enter both email and password');
       return;
     }
-
     try {
       const result = await authManager.login(email, password);
-
       if (result.success) {
         if (window.popupSystem) {
           popupSystem.success('Login successful!');
@@ -86,7 +79,6 @@ function render_auth_component(): void
         alert('Network error: ' + error.message);
     }
   }
-
   async function handleRegister() {
     const form = document.getElementById('register-form');
     const formData = new FormData(form);
@@ -97,14 +89,12 @@ function render_auth_component(): void
       surname: formData.get('surname'),
       password: formData.get('password')
     };
-
     try {
       const response = await fetch('/', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: new URLSearchParams(data)
       });
-
       if (response.redirected || response.ok)
         window.location.reload();
       else {
@@ -118,10 +108,8 @@ function render_auth_component(): void
         popupSystem.error('Network error: ' + error.message);
       else 
         alert('Network error: ' + error.message);
-      
     }
   }
-
   document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
@@ -144,4 +132,4 @@ function render_auth_component(): void
   });
 </script>
 HTML;
-}
+}

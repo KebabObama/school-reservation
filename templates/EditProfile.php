@@ -5,7 +5,6 @@ if (!isset($_SESSION['user_id'])) {
   header('Location: /');
   exit;
 }
-
 require_once __DIR__ . '/../lib/db.php';
 try {
   $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
@@ -14,13 +13,11 @@ try {
 } catch (Exception $e) {
   $user = null;
 }
-
 if (!$user) {
   echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">User not found</h1></div>';
   exit;
 }
 ?>
-
 <div class="max-w-2xl mx-auto space-y-6">
   <div class="bg-white rounded-lg shadow p-6">
     <div class="flex items-center justify-between">
@@ -28,7 +25,7 @@ if (!$user) {
         <h1 class="text-2xl font-bold text-gray-900">Edit Profile</h1>
         <p class="text-gray-600">Update your personal information</p>
       </div>
-      <button id="closeEditProfileBtn" class="text-gray-500 hover:text-gray-700">
+      <button onclick="loadPage('Profile')" class="text-gray-500 hover:text-gray-700">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
         </svg>
@@ -92,107 +89,94 @@ if (!$user) {
         </div>
       </div>
       <div class="flex justify-end space-x-4 pt-6 border-t">
-        <button type="button" id="cancelEditProfileBtn"
+        <button type="button" onclick="loadPage('Profile')"
           class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500">
           Cancel
         </button>
-        <button type="submit"
-          class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500">
+        <button type="button" onclick="(async () => {
+            const confirmed = await popupSystem.confirm(
+              'Are you sure you want to save these changes to your profile?',
+              'Confirm Profile Update',
+              { confirmText: 'Save Changes', cancelText: 'Cancel', type: 'info' }
+            );
+            if (!confirmed) return;
+            const form = document.getElementById('editProfileForm');
+            document.querySelectorAll(`[id$='Error']`).forEach(el => {
+              el.classList.add('hidden');
+              el.textContent = '';
+            });
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            let hasErrors = false;
+            const showError = (id, msg) => {
+              const el = document.getElementById(id);
+              el.textContent = msg;
+              el.classList.remove('hidden');
+            };
+            if (data.name.trim().length < 2) {
+              showError('nameError', 'Name must be at least 2 characters long');
+              hasErrors = true;
+            }
+            if (data.surname.trim().length < 2) {
+              showError('surnameError', 'Surname must be at least 2 characters long');
+              hasErrors = true;
+            }
+            if (!data.email.includes('@')) {
+              showError('emailError', 'Please enter a valid email address');
+              hasErrors = true;
+            }
+            if (data.password || data.current_password) {
+              if (!data.current_password) {
+                showError('currentPasswordError', 'Current password is required to change password');
+                hasErrors = true;
+              }
+              if (data.password.length < 6) {
+                showError('newPasswordError', 'Password must be at least 6 characters long');
+                hasErrors = true;
+              }
+              if (!/[A-Z]/.test(data.password)) {
+                showError('newPasswordError', 'Password must contain at least one uppercase letter');
+                hasErrors = true;
+              }
+              if (!/[0-9]/.test(data.password)) {
+                showError('newPasswordError', 'Password must contain at least one number');
+                hasErrors = true;
+              }
+              if (data.password !== data.confirm_password) {
+                showError('confirmPasswordError', 'Passwords do not match');
+                hasErrors = true;
+              }
+            }
+            if (hasErrors) return;
+            const submitData = {
+              name: data.name.trim(),
+              surname: data.surname.trim(),
+              email: data.email.trim()
+            };
+            if (data.current_password && data.password) {
+              submitData.current_password = data.current_password;
+              submitData.password = data.password;
+            }
+            try {
+              const response = await fetch('/api/users/update-profile.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(submitData),
+                credentials: 'same-origin'
+              });
+              const result = await response.json();
+              if (response.ok) {
+                popupSystem.success('Profile updated successfully!');
+              } else {
+                popupSystem.error(result.error || 'Failed to update profile');
+              }
+            } catch (error) {
+              popupSystem.error('Network error: ' + error.message);
+            }
+        })()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500">
           Save Changes
         </button>
       </div>
     </form>
   </div>
 </div>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('editProfileForm');
-    document.getElementById('closeEditProfileBtn')?.addEventListener('click', function() {
-      loadPage('Profile');
-    });
-    document.getElementById('cancelEditProfileBtn')?.addEventListener('click', function() {
-      loadPage('Profile');
-    });
-    form.addEventListener('submit', async function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      document.querySelectorAll('[id$="Error"]').forEach(el => {
-        el.classList.add('hidden');
-        el.textContent = '';
-      });
-      const formData = new FormData(form);
-      const data = Object.fromEntries(formData.entries());
-      let hasErrors = false;
-      if (data.name.trim().length < 2) {
-        showError('nameError', 'Name must be at least 2 characters long');
-        hasErrors = true;
-      }
-      if (data.surname.trim().length < 2) {
-        showError('surnameError', 'Surname must be at least 2 characters long');
-        hasErrors = true;
-      }
-      if (!data.email.includes('@')) {
-        showError('emailError', 'Please enter a valid email address');
-        hasErrors = true;
-      }
-      if (data.password || data.current_password) {
-        if (!data.current_password) {
-          showError('currentPasswordError', 'Current password is required to change password');
-          hasErrors = true;
-        }
-        if (data.password.length < 6) {
-          showError('newPasswordError', 'Password must be at least 6 characters long');
-          hasErrors = true;
-        }
-        if (!/[A-Z]/.test(data.password)) {
-          showError('newPasswordError', 'Password must contain at least one uppercase letter');
-          hasErrors = true;
-        }
-        if (!/[0-9]/.test(data.password)) {
-          showError('newPasswordError', 'Password must contain at least one number');
-          hasErrors = true;
-        }
-        if (data.password !== data.confirm_password) {
-          showError('confirmPasswordError', 'Passwords do not match');
-          hasErrors = true;
-        }
-      }
-      if (hasErrors) return;
-      const submitData = {
-        name: data.name.trim(),
-        surname: data.surname.trim(),
-        email: data.email.trim()
-      };
-      if (data.current_password && data.password) {
-        submitData.current_password = data.current_password;
-        submitData.password = data.password;
-      }
-      try {
-        const response = await fetch('/api/users/update-profile.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(submitData),
-          credentials: 'same-origin'
-        });
-        const result = await response.json();
-        if (response.ok) {
-          popupSystem.success('Profile updated successfully!');
-          setTimeout(() => loadPage('Profile'), 1500);
-        } else {
-          popupSystem.error(result.error || 'Failed to update profile');
-        }
-      } catch (error) {
-        popupSystem.error('Network error: ' + error.message);
-      }
-    });
-
-    function showError(elementId, message) {
-      const errorElement = document.getElementById(elementId);
-      errorElement.textContent = message;
-      errorElement.classList.remove('hidden');
-    }
-  });
-</script>

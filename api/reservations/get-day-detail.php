@@ -1,29 +1,20 @@
 <?php
 session_start();
 header('Content-Type: application/json');
-
 if (!isset($_SESSION['user_id'])) {
   http_response_code(401);
   echo json_encode(['error' => 'Not authenticated']);
   exit;
 }
-
 require_once __DIR__ . '/../../lib/db.php';
-
 try {
-  // Get date from query parameters
   $date = $_GET['date'] ?? '';
-  
   if (empty($date)) {
     throw new Exception('Date parameter is required');
   }
-  
-  // Validate date format
   if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
     throw new Exception('Invalid date format. Use YYYY-MM-DD');
   }
-  
-  // Get reservations for the specific date with detailed information
   $stmt = $pdo->prepare("
     SELECT 
       r.id,
@@ -55,14 +46,10 @@ try {
     AND r.status IN ('pending', 'accepted')
     ORDER BY r.start_time ASC
   ");
-  
   $stmt->execute([$date]);
   $reservations = $stmt->fetchAll(PDO::FETCH_ASSOC);
-  
-  // Format the date for display
   $dateObj = new DateTime($date);
   $formattedDate = $dateObj->format('l, F j, Y');
-  
   echo json_encode([
     'success' => true,
     'date' => $date,
@@ -70,7 +57,6 @@ try {
     'reservations' => $reservations,
     'count' => count($reservations)
   ]);
-  
 } catch (Exception $e) {
   http_response_code(400);
   echo json_encode(['error' => $e->getMessage()]);

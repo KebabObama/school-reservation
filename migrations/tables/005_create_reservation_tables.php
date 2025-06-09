@@ -1,15 +1,9 @@
 <?php
-
 declare(strict_types=1);
-
 echo "Creating reservation tables (reservation_purposes, reservations)...\n";
-
-// Get database connection from parent scope
 if (!isset($pdo)) {
     require_once __DIR__ . '/../../lib/db.php';
 }
-
-// Create reservation tables
 $reservationTablesSql = <<<SQL
 CREATE TABLE IF NOT EXISTS reservation_purposes (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -18,7 +12,6 @@ CREATE TABLE IF NOT EXISTS reservation_purposes (
     requires_approval BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 CREATE TABLE IF NOT EXISTS reservations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     room_id INT NOT NULL,
@@ -54,7 +47,5 @@ CREATE TABLE IF NOT EXISTS reservations (
     CONSTRAINT chk_end_after_start CHECK (end_time > start_time)
 );
 SQL;
-
 $pdo->exec($reservationTablesSql);
-
 echo "✅ Reservation tables created successfully\n";

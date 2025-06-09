@@ -1,12 +1,7 @@
-/**
- * Notification Card Component
- * Small cards that appear in the bottom-right corner for informational messages
- */
-
 class NotificationCard {
   constructor(message, type = 'info', title = '', duration = 5000) {
     this.message = message;
-    this.type = type; // info, success, warning, error
+    this.type = type;
     this.title = title;
     this.duration = duration;
   }
@@ -45,12 +40,10 @@ class NotificationCard {
 
   create() {
     const card = document.createElement('div');
-    // Use Tailwind classes for positioning and animation
     card.className = `pointer-events-auto bg-white rounded-lg shadow-lg p-4 cursor-pointer border-l-4 ${this.getTailwindBorderColor()} transform translate-x-full transition-transform duration-300 ease-in-out`;
-    
+
     const displayTitle = this.title || this.getDefaultTitle();
-    
-    // Use Tailwind classes for the inner structure
+
     card.innerHTML = `
       <div class="flex items-center justify-between mb-1">
         <div class="font-semibold text-sm text-gray-900">${this.escapeHtml(displayTitle)}</div>
@@ -58,8 +51,7 @@ class NotificationCard {
       </div>
       <div class="text-sm text-gray-500 leading-relaxed">${this.escapeHtml(this.message)}</div>
     `;
-    
-    // Click to dismiss
+
     card.addEventListener('click', (e) => {
       if (!e.target.closest('button')) {
         this.remove(card);
@@ -98,7 +90,6 @@ class NotificationCard {
   }
 }
 
-// Export for module usage
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = NotificationCard;
 }

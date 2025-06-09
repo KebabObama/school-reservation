@@ -2,14 +2,11 @@
 if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
-
 if (!isset($_SESSION['user_id'])) {
   header('Location: /');
   exit;
 }
-
 require_once __DIR__ . '/../lib/db.php';
-
 try {
   $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
   $stmt->execute([$_SESSION['user_id']]);
@@ -34,7 +31,6 @@ if (!$user) {
   exit;
 }
 ?>
-
 <div class="space-y-6">
   <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-6 text-white">
     <div class="flex items-center">
@@ -44,7 +40,6 @@ if (!$user) {
       <div class="ml-6">
         <h1 class="text-3xl font-bold"><?php echo htmlspecialchars($user['name'] . ' ' . $user['surname']); ?></h1>
         <p class="text-blue-100"><?php echo htmlspecialchars($user['email']); ?></p>
-
       </div>
     </div>
   </div>

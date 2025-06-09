@@ -32,7 +32,6 @@ AddType text/css .css
     AddOutputFilterByType DEFLATE application/x-javascript
 </IfModule>
 
-# Cache static files
 <IfModule mod_expires.c>
     ExpiresActive On
     ExpiresByType text/css "access plus 1 month"
