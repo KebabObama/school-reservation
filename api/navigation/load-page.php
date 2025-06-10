@@ -122,51 +122,36 @@ if (!file_exists($template_file)) {
   echo '<div class="p-6"><h1 class="text-2xl font-bold text-red-600">Template Not Found</h1><p>The requested template file does not exist.</p></div>';
   exit;
 }
-if (isset($data['room_id'])) {
+if (isset($data['room_id']))
   $_GET['room_id'] = $data['room_id'];
-}
-if (isset($data['reservation_id'])) {
+if (isset($data['reservation_id']))
   $_GET['reservation_id'] = $data['reservation_id'];
-}
-if (isset($data['room_type_id'])) {
+if (isset($data['room_type_id']))
   $_GET['room_type_id'] = $data['room_type_id'];
-}
-if (isset($data['purpose_id'])) {
+if (isset($data['purpose_id']))
   $_GET['purpose_id'] = $data['purpose_id'];
-}
-if (isset($urlParams['id'])) {
+if (isset($urlParams['id']))
   $_GET['id'] = $urlParams['id'];
-}
-if (isset($urlParams['room_id'])) {
+if (isset($urlParams['room_id']))
   $_GET['room_id'] = $urlParams['room_id'];
-}
-if (isset($urlParams['reservation_id'])) {
+if (isset($urlParams['reservation_id']))
   $_GET['reservation_id'] = $urlParams['reservation_id'];
-}
-if (isset($urlParams['room_type_id'])) {
+if (isset($urlParams['room_type_id']))
   $_GET['room_type_id'] = $urlParams['room_type_id'];
-}
-if (isset($urlParams['purpose_id'])) {
+if (isset($urlParams['purpose_id']))
   $_GET['purpose_id'] = $urlParams['purpose_id'];
-}
-if (isset($urlParams['date'])) {
+if (isset($urlParams['date']))
   $_GET['date'] = $urlParams['date'];
-}
-if (isset($urlParams['month'])) {
+if (isset($urlParams['month']))
   $_GET['month'] = $urlParams['month'];
-}
-if (isset($urlParams['year'])) {
+if (isset($urlParams['year']))
   $_GET['year'] = $urlParams['year'];
-}
-if (isset($urlParams['date'])) {
+if (isset($urlParams['date']))
   $_GET['date'] = $urlParams['date'];
-}
-if (isset($urlParams['month'])) {
+if (isset($urlParams['month']))
   $_GET['month'] = $urlParams['month'];
-}
-if (isset($urlParams['year'])) {
+if (isset($urlParams['year']))
   $_GET['year'] = $urlParams['year'];
-}
 try {
   require $template_file;
 } catch (Exception $e) {
