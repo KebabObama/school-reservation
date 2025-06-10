@@ -16,6 +16,10 @@ Header always set Referrer-Policy "strict-origin-when-cross-origin"
 </Files>
 <Files "*.db">
     Order allow,deny
+    Deny from all 
+</Files>
+<Files "migrate.php">
+    Order allow,deny
     Deny from all
 </Files>
 AddType application/javascript .js
