@@ -41,7 +41,9 @@ try {
     }
     $columns = implode(', ', $allPermissions);
     $placeholders = implode(', ', array_fill(0, count($allPermissions), '?'));
-    $updateClauses = implode(', ', array_map(fn($col) => "$col = VALUES($col)", $allPermissions));
+    $updateClauses = implode(', ', array_map(function ($col) {
+      return "$col = VALUES($col)";
+    }, $allPermissions));
     $stmt = $pdo->prepare("
       INSERT INTO permissions (user_id, $columns)
       VALUES (?, $placeholders)

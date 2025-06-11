@@ -1,11 +1,12 @@
 <?php
+
 declare(strict_types=1);
 $envPath = __DIR__ . '/../.env';
 if (!file_exists($envPath))
   throw new RuntimeException('.env file not found');
 $env = [];
 foreach (file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-  if (str_starts_with($line, '#')) continue;
+  if (strpos($line, '#') === 0) continue;
   [$key, $value] = array_map('trim', explode('=', $line, 2));
   $env[$key] = $value;
 }
@@ -22,4 +23,4 @@ try {
   ]);
 } catch (PDOException $e) {
   exit('Database connection failed: ' . $e->getMessage());
-}
+}

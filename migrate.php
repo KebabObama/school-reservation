@@ -1,7 +1,5 @@
 <?php
 
-
-
 declare(strict_types=1);
 
 $command = $argv[1] ?? '';
@@ -164,13 +162,14 @@ function loadEnv(string $path): array
   $env = [];
   foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
     $line = trim($line);
-    if ($line === '' || str_starts_with($line, '#')) continue;
+    if ($line === '' || strpos($line, '#') === 0) continue;
     if (strpos($line, '=') === false) continue;
     [$key, $value] = array_map('trim', explode('=', $line, 2));
     $env[$key] = $value;
   }
   return $env;
 }
+
 
 function connectToDatabase(array $env): PDO
 {
@@ -179,29 +178,33 @@ function connectToDatabase(array $env): PDO
   $user = $env['DB_USER'] ?? 'root';
   $pass = $env['DB_PASS'] ?? '';
   $dbName = $env['DB_NAME'] ?? 'room_manager';
+  if (!preg_match('/^[a-zA-Z0-9_]+$/', $dbName)) {
+    throw new RuntimeException("Invalid database name.");
+  }
+
+  $dsn = "mysql:host=$host;port=$port;charset=utf8mb4";
+  $options = [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES => false, // Better security
+  ];
 
   try {
-    $dsn = "mysql:host=$host;port=$port;dbname=$dbName;charset=utf8mb4";
-    $pdo = new PDO($dsn, $user, $pass, [
-      PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-      PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
-
+    // First attempt: Connect with the database name
+    $pdo = new PDO("$dsn;dbname=$dbName", $user, $pass, $options);
     return $pdo;
-  } catch (PDOException) {
+  } catch (PDOException $e) {
+    // Second attempt: Connect without DB and try to create it
     try {
-      $dsn = "mysql:host=$host;port=$port;charset=utf8mb4";
-      $pdo = new PDO($dsn, $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-      ]);
+      $pdo = new PDO($dsn, $user, $pass, $options);
 
+      // Create DB if it doesn't exist
       $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci");
       $pdo->exec("USE `$dbName`");
 
       return $pdo;
-    } catch (PDOException $e2) {
-      throw new RuntimeException("Database connection failed: " . $e2->getMessage());
+    } catch (PDOException $e) {
+      throw new RuntimeException("Database connection failed: " . $e->getMessage());
     }
   }
 }
@@ -267,34 +270,81 @@ function getMigrationFiles(string $dir): array
 function getRunMigrations(PDO $pdo): array
 {
   try {
-    $pdo->query("SELECT DATABASE()")->fetchColumn();
-    $stmt = $pdo->query("SELECT filename, executed_at FROM migrations ORDER BY filename");
-    return $stmt->fetchAll();
-  } catch (PDOException) {
+    // Check if the migrations table exists first
+    $tableExists = $pdo->query(
+      "SELECT 1 FROM information_schema.tables 
+             WHERE table_schema = DATABASE() AND table_name = 'migrations'"
+    )->fetchColumn();
+
+    if (!$tableExists) {
+      throw new RuntimeException("Migrations table does not exist.");
+    }
+
+    // Fetch all migrations safely with prepared statements
+    $stmt = $pdo->prepare("SELECT filename, executed_at FROM migrations ORDER BY filename");
+    $stmt->execute();
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+  } catch (PDOException $ex) {
+    error_log("Failed to fetch migrations: " . $ex->getMessage());
     return [];
   }
 }
 
+/**
+ * Executes a migration file and records it in the migrations table.
+ *
+ * @param PDO $pdo Database connection object.
+ * @param string $filename The migration filename (e.g., "001_init.php").
+ * @throws RuntimeException If the migration file is missing or SQL execution fails.
+ */
 function executeMigration(PDO $pdo, string $filename): void
 {
-  $filepath = __DIR__ . '/migrations/' . $filename;
-  if (!file_exists($filepath))
+  $migrationsDir = __DIR__ . '/migrations/';
+  $filepath = $migrationsDir . $filename;
+
+  // Validate filename to prevent directory traversal
+  if (!preg_match('/^[a-zA-Z0-9_\-\.]+\.php$/', $filename)) {
+    throw new RuntimeException("Invalid migration filename: $filename");
+  }
+
+  // Check if the file exists
+  if (!file_exists($filepath)) {
     throw new RuntimeException("Migration file not found: $filepath");
+  }
+
+  // Start transaction (for atomicity)
+  $pdo->beginTransaction();
+
   try {
+    // Execute the migration file
     ob_start();
     require $filepath;
-    ob_get_clean();
-    if (basename($filename) === '001_init.php')
+    ob_end_clean(); // Discard output
+
+    // Special case: If it's the initial migration, ensure the table exists
+    if (basename($filename) === '001_init.php') {
       createMigrationsTable($pdo);
-    try {
-      $stmt = $pdo->prepare("INSERT IGNORE INTO migrations (filename) VALUES (?)");
-      $stmt->execute([$filename]);
-    } catch (PDOException) {
-      createMigrationsTable($pdo);
-      $stmt = $pdo->prepare("INSERT IGNORE INTO migrations (filename) VALUES (?)");
-      $stmt->execute([$filename]);
     }
+
+    // Record the migration (with retry logic if table doesn't exist)
+    try {
+      $stmt = $pdo->prepare("INSERT INTO migrations (filename, executed_at) VALUES (?, NOW())");
+      $stmt->execute([$filename]);
+    } catch (PDOException $e) {
+      // Check if the error is due to a missing migrations table (PHP 7.x compatible)
+      if ($e->getCode() === '42S02' || strpos($e->getMessage(), 'migrations') !== false) {
+        createMigrationsTable($pdo);
+        $stmt = $pdo->prepare("INSERT INTO migrations (filename, executed_at) VALUES (?, NOW())");
+        $stmt->execute([$filename]);
+      } else {
+        throw $e; // Re-throw other PDOExceptions
+      }
+    }
+
+    $pdo->commit();
   } catch (Exception $e) {
-    throw $e;
+    $pdo->rollBack();
+    throw new RuntimeException("Migration failed: " . $e->getMessage(), 0, $e);
   }
 }
